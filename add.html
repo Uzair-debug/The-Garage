@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="bg.js"></script>
 
 <nav>
@@ -111,7 +112,7 @@
 
   <div class="form-actions">
     <a href="index.html" class="btn">Cancel</a>
-    <button class="btn btn-primary" onclick="saveCar()">Save Car</button>
+    <button class="btn btn-primary" id="save-btn" onclick="saveCar()">Save Car</button>
   </div>
 </div>
 
@@ -121,38 +122,47 @@
   let mods = [];
   let editId = null;
 
-  // Check if editing
-  const params = new URLSearchParams(location.search);
-  if (params.get('id')) {
-    editId = params.get('id');
-    const car = getCar(editId);
-    if (car) {
-      document.getElementById('page-title').textContent = 'Edit Car';
-      document.getElementById('page-sub').textContent = `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim();
-      document.getElementById('year').value = car.year || '';
-      document.getElementById('make').value = car.make || '';
-      document.getElementById('model').value = car.model || '';
-      document.getElementById('engine').value = car.engine || '';
-      document.getElementById('power').value = car.power || '';
-      document.getElementById('drivetrain').value = car.drivetrain || '';
-      document.getElementById('colour').value = car.colour || '';
-      document.getElementById('owner').value = car.owner || '';
-      photos = car.photos || [];
-      mods = car.mods || [];
-      renderPreviews();
-      renderMods();
-    }
+  const CAT_COLORS = {
+    Engine:'#e63030', Exhaust:'#ef9f27', Suspension:'#378add',
+    Exterior:'#1d9e75', Wheels:'#7f77dd', Interior:'#639922',
+    Brakes:'#d85a30', Audio:'#d4537e', Other:'#888780'
+  };
+
+  function normalizeMod(m) {
+    return typeof m === 'string' ? { cat: 'Other', name: m } : m;
   }
 
+  // Load for editing
+  async function loadEdit() {
+    const params = new URLSearchParams(location.search);
+    if (!params.get('id')) return;
+    editId = params.get('id');
+    const car = await getCar(editId);
+    if (!car) return;
+    document.getElementById('page-title').textContent = 'Edit Car';
+    document.getElementById('page-sub').textContent = `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim();
+    document.getElementById('year').value = car.year || '';
+    document.getElementById('make').value = car.make || '';
+    document.getElementById('model').value = car.model || '';
+    document.getElementById('engine').value = car.engine || '';
+    document.getElementById('power').value = car.power || '';
+    document.getElementById('drivetrain').value = car.drivetrain || '';
+    document.getElementById('colour').value = car.colour || '';
+    document.getElementById('owner').value = car.owner || '';
+    photos = car.photos || [];
+    mods = car.mods || [];
+    renderPreviews();
+    renderMods();
+  }
+
+  loadEdit();
+
   // Photo handling
-  document.getElementById('photo-input').addEventListener('change', function() {
+  document.getElementById('photo-input').addEventListener('change', function () {
     const files = Array.from(this.files).slice(0, 5 - photos.length);
     files.forEach(file => {
       const reader = new FileReader();
-      reader.onload = e => {
-        photos.push(e.target.result);
-        renderPreviews();
-      };
+      reader.onload = e => { photos.push(e.target.result); renderPreviews(); };
       reader.readAsDataURL(file);
     });
     this.value = '';
@@ -162,27 +172,15 @@
     const grid = document.getElementById('photo-preview');
     grid.innerHTML = photos.map((src, i) => `
       <div class="photo-thumb">
-        <img src="${src}" alt="Photo ${i+1}">
+        <img src="${src}" alt="Photo ${i + 1}">
         <button class="remove-photo" onclick="removePhoto(${i})" title="Remove">×</button>
       </div>`).join('');
     document.getElementById('photo-drop').style.display = photos.length >= 5 ? 'none' : '';
   }
 
-  function removePhoto(i) {
-    photos.splice(i, 1);
-    renderPreviews();
-  }
+  function removePhoto(i) { photos.splice(i, 1); renderPreviews(); }
 
-  const CAT_COLORS = {
-    Engine:     '#e63030', Exhaust:    '#ef9f27', Suspension: '#378add',
-    Exterior:   '#1d9e75', Wheels:     '#7f77dd', Interior:   '#639922',
-    Brakes:     '#d85a30', Audio:      '#d4537e', Other:      '#888780'
-  };
-
-  function normalizeMod(m) {
-    return typeof m === 'string' ? { cat: 'Other', name: m } : m;
-  }
-
+  // Mods handling
   document.getElementById('mod-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); addMod(); }
   });
@@ -191,25 +189,20 @@
     const input = document.getElementById('mod-input');
     const val = input.value.trim();
     if (!val) return;
-    const cat = document.getElementById('mod-cat').value;
-    mods.push({ cat, name: val });
+    mods.push({ cat: document.getElementById('mod-cat').value, name: val });
     input.value = '';
     renderMods();
   }
 
-  function removeMod(i) {
-    mods.splice(i, 1);
-    renderMods();
-  }
+  function removeMod(i) { mods.splice(i, 1); renderMods(); }
 
   function renderMods() {
     document.getElementById('mods-list').innerHTML = mods.map((m, i) => {
       const { cat, name } = normalizeMod(m);
       const color = CAT_COLORS[cat] || CAT_COLORS.Other;
-      const bg = color + '22';
       return `
         <div class="mod-item">
-          <span class="mod-cat-badge" style="background:${bg};color:${color};border:1px solid ${color}44">${cat}</span>
+          <span class="mod-cat-badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${cat}</span>
           <span class="mod-item-name">${name}</span>
           <button class="mod-item-remove" onclick="removeMod(${i})" title="Remove">×</button>
         </div>`;
@@ -217,29 +210,37 @@
   }
 
   // Save
-  function saveCar() {
+  async function saveCar() {
     const make = document.getElementById('make').value.trim();
     const model = document.getElementById('model').value.trim();
-    if (!make && !model) {
-      showToast('Please enter at least a make or model.', 'error');
-      return;
+    if (!make && !model) { showToast('Please enter at least a make or model.', 'error'); return; }
+
+    const btn = document.getElementById('save-btn');
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+
+    try {
+      const car = {
+        id: editId || generateId(),
+        year: document.getElementById('year').value.trim(),
+        make, model,
+        engine: document.getElementById('engine').value.trim(),
+        power: document.getElementById('power').value.trim(),
+        drivetrain: document.getElementById('drivetrain').value,
+        colour: document.getElementById('colour').value.trim(),
+        owner: document.getElementById('owner').value.trim(),
+        photos,
+        mods,
+        updated_at: Date.now()
+      };
+      await upsertCar(car);
+      showToast(editId ? 'Car updated!' : 'Car added to the garage!');
+      setTimeout(() => location.href = `car.html?id=${car.id}`, 800);
+    } catch (e) {
+      showToast('Error saving — check your connection.', 'error');
+      btn.textContent = 'Save Car';
+      btn.disabled = false;
     }
-    const car = {
-      id: editId || generateId(),
-      year: document.getElementById('year').value.trim(),
-      make, model,
-      engine: document.getElementById('engine').value.trim(),
-      power: document.getElementById('power').value.trim(),
-      drivetrain: document.getElementById('drivetrain').value,
-      colour: document.getElementById('colour').value.trim(),
-      owner: document.getElementById('owner').value.trim(),
-      photos,
-      mods,
-      updatedAt: Date.now()
-    };
-    upsertCar(car);
-    showToast(editId ? 'Car updated!' : 'Car added to the garage!');
-    setTimeout(() => location.href = `car.html?id=${car.id}`, 800);
   }
 </script>
 </body>

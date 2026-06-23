@@ -22,7 +22,7 @@
   const overlay = document.createElement('div');
   overlay.style.cssText = `
     position:fixed;inset:0;z-index:0;pointer-events:none;
-    background:linear-gradient(to bottom,rgba(10,10,12,0.96) 0%,rgba(10,10,12,0.92) 40%,rgba(10,10,12,0.97) 100%);
+    background:linear-gradient(to bottom,rgba(10,10,12,0.82) 0%,rgba(10,10,12,0.75) 40%,rgba(10,10,12,0.85) 100%);
   `;
   document.body.prepend(overlay);
 

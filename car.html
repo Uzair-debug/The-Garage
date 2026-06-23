@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="bg.js"></script>
 
 <nav>
@@ -25,31 +26,42 @@
 
 <script src="app.js"></script>
 <script>
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id');
-  const car = id ? getCar(id) : null;
+  const CAT_COLORS = {
+    Engine:'#e63030', Exhaust:'#ef9f27', Suspension:'#378add',
+    Exterior:'#1d9e75', Wheels:'#7f77dd', Interior:'#639922',
+    Brakes:'#d85a30', Audio:'#d4537e', Other:'#888780'
+  };
 
-  if (!car) {
-    document.getElementById('car-detail').innerHTML = `
-      <div style="text-align:center;padding:4rem 0;color:var(--text-muted)">
-        <p style="font-size:1.1rem;margin-bottom:1rem">Car not found.</p>
-        <a href="index.html" class="btn">Back to Garage</a>
-      </div>`;
-  } else {
+  function normalizeMod(m) { return typeof m === 'string' ? { cat: 'Other', name: m } : m; }
+
+  async function init() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const car = id ? await getCar(id) : null;
+
+    if (!car) {
+      document.getElementById('car-detail').innerHTML = `
+        <div style="text-align:center;padding:4rem 0;color:var(--text-muted)">
+          <p style="font-size:1.1rem;margin-bottom:1rem">Car not found.</p>
+          <a href="index.html" class="btn">Back to Garage</a>
+        </div>`;
+      return;
+    }
+
     document.title = `${car.year ? car.year + ' ' : ''}${car.make} ${car.model} – The Garage`;
     render(car);
   }
 
   function render(car) {
     const title = [car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car';
-    const yearMake = [car.year, car.drivetrain ? car.drivetrain + ' · ' + (car.colour || '') : car.colour].filter(Boolean).join(' · ');
+    const yearMake = [car.year, car.drivetrain ? car.drivetrain + (car.colour ? ' · ' + car.colour : '') : car.colour].filter(Boolean).join(' · ');
 
     // Gallery
     let galleryHtml = '';
     if (car.photos && car.photos.length) {
       const thumbs = car.photos.map((src, i) => `
-        <div class="gallery-thumb ${i===0?'active':''}" data-idx="${i}" onclick="setPhoto(${i})">
-          <img src="${src}" alt="Photo ${i+1}">
+        <div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="setPhoto(${i}, ${JSON.stringify(car.photos).replace(/"/g, '&quot;')})">
+          <img src="${src}" alt="Photo ${i + 1}">
         </div>`).join('');
       galleryHtml = `
         <div class="photo-gallery">
@@ -72,28 +84,16 @@
 
     // Specs
     const specRows = [
-      ['Make', car.make],
-      ['Model', car.model],
-      ['Year', car.year],
-      ['Engine', car.engine],
-      ['Power', car.power],
-      ['Drivetrain', car.drivetrain],
-      ['Colour', car.colour],
-      ['Owner', car.owner],
+      ['Make', car.make], ['Model', car.model], ['Year', car.year],
+      ['Engine', car.engine], ['Power', car.power], ['Drivetrain', car.drivetrain],
+      ['Colour', car.colour], ['Owner', car.owner],
     ].filter(([, v]) => v);
 
-    const specsHtml = specRows.length ? specRows.map(([k, v]) =>
-      `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${v}</span></div>`
-    ).join('') : '<p style="color:var(--text-dim);font-size:0.85rem">No specs added.</p>';
+    const specsHtml = specRows.length
+      ? specRows.map(([k, v]) => `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${v}</span></div>`).join('')
+      : '<p style="color:var(--text-dim);font-size:0.85rem">No specs added.</p>';
 
-    // Mods
-    const CAT_COLORS = {
-      Engine:'#e63030',Exhaust:'#ef9f27',Suspension:'#378add',
-      Exterior:'#1d9e75',Wheels:'#7f77dd',Interior:'#639922',
-      Brakes:'#d85a30',Audio:'#d4537e',Other:'#888780'
-    };
-    function normalizeMod(m) { return typeof m === 'string' ? {cat:'Other',name:m} : m; }
-
+    // Mods grouped by category
     let modsHtml = '<p style="color:var(--text-dim);font-size:0.85rem">No mods listed.</p>';
     if (car.mods && car.mods.length) {
       const grouped = {};
@@ -102,18 +102,16 @@
       });
       modsHtml = Object.entries(grouped).map(([cat, names]) => {
         const color = CAT_COLORS[cat] || CAT_COLORS.Other;
-        const items = names.map(n => `
-          <div class="mod-detail-item">
-            <span class="mod-detail-dot" style="background:${color}"></span>
-            <span>${n}</span>
-          </div>`).join('');
         return `
           <div class="mods-group">
             <div class="mods-group-header">
-              <span class="mods-group-dot" style="background:${color}"></span>
-              ${cat}
+              <span class="mods-group-dot" style="background:${color}"></span>${cat}
             </div>
-            ${items}
+            ${names.map(n => `
+              <div class="mod-detail-item">
+                <span class="mod-detail-dot" style="background:${color}"></span>
+                <span>${n}</span>
+              </div>`).join('')}
           </div>`;
       }).join('');
     }
@@ -126,7 +124,7 @@
         </div>
         <div class="car-detail-actions">
           <a href="add.html?id=${car.id}" class="btn">Edit</a>
-          <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+          <button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>
         </div>
       </div>
 
@@ -144,20 +142,19 @@
       </div>`;
   }
 
-  function setPhoto(idx) {
+  function setPhoto(idx, photos) {
     const img = document.getElementById('gallery-main-img');
-    if (img) img.src = car.photos[idx];
-    document.querySelectorAll('.gallery-thumb').forEach((t, i) => {
-      t.classList.toggle('active', i === idx);
-    });
+    if (img) img.src = photos[idx];
+    document.querySelectorAll('.gallery-thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
   }
 
-  function confirmDelete() {
-    if (confirm(`Delete this car? This cannot be undone.`)) {
-      deleteCar(car.id);
-      location.href = 'index.html';
-    }
+  async function confirmDelete(id) {
+    if (!confirm('Delete this car? This cannot be undone.')) return;
+    await deleteCar(id);
+    location.href = 'index.html';
   }
+
+  init();
 </script>
 </body>
 </html>

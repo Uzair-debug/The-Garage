@@ -1,28 +1,32 @@
-const STORAGE_KEY = 'garage_cars_v1';
+const SUPABASE_URL = 'https://fwxxuhyjuujdimqlyfys.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3eHh1aHlqdXVqZGltcWx5ZnlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMTMyNzAsImV4cCI6MjA5Nzc4OTI3MH0.AVots0cQi-_g6buANdaXAsZrWD0_LAiDVvZbI1USqaQ';
 
-function getCars() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
+let _sb;
+function sb() {
+  if (!_sb) _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  return _sb;
 }
 
-function saveCars(cars) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cars));
+async function getCars() {
+  const { data, error } = await sb().from('cars').select('*').order('updated_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
 }
 
-function getCar(id) {
-  return getCars().find(c => c.id === id);
+async function getCar(id) {
+  const { data, error } = await sb().from('cars').select('*').eq('id', id).single();
+  if (error) return null;
+  return data;
 }
 
-function deleteCar(id) {
-  saveCars(getCars().filter(c => c.id !== id));
+async function upsertCar(car) {
+  const { error } = await sb().from('cars').upsert(car);
+  if (error) throw error;
 }
 
-function upsertCar(car) {
-  const cars = getCars();
-  const idx = cars.findIndex(c => c.id === car.id);
-  if (idx >= 0) cars[idx] = car;
-  else cars.unshift(car);
-  saveCars(cars);
+async function deleteCar(id) {
+  const { error } = await sb().from('cars').delete().eq('id', id);
+  if (error) throw error;
 }
 
 function generateId() {
