@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car – The Garage</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="bg.js"></script>
+
+<nav>
+  <div class="nav-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+    <a href="index.html">The <span style="color:var(--accent)">Garage</span></a>
+  </div>
+  <div class="nav-actions">
+    <a href="index.html" class="btn btn-ghost">← All Cars</a>
+  </div>
+</nav>
+
+<div class="car-detail" id="car-detail">
+  <p style="color:var(--text-muted);padding:3rem 0;text-align:center">Loading…</p>
+</div>
+
+<script src="app.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  const car = id ? getCar(id) : null;
+
+  if (!car) {
+    document.getElementById('car-detail').innerHTML = `
+      <div style="text-align:center;padding:4rem 0;color:var(--text-muted)">
+        <p style="font-size:1.1rem;margin-bottom:1rem">Car not found.</p>
+        <a href="index.html" class="btn">Back to Garage</a>
+      </div>`;
+  } else {
+    document.title = `${car.year ? car.year + ' ' : ''}${car.make} ${car.model} – The Garage`;
+    render(car);
+  }
+
+  function render(car) {
+    const title = [car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car';
+    const yearMake = [car.year, car.drivetrain ? car.drivetrain + ' · ' + (car.colour || '') : car.colour].filter(Boolean).join(' · ');
+
+    // Gallery
+    let galleryHtml = '';
+    if (car.photos && car.photos.length) {
+      const thumbs = car.photos.map((src, i) => `
+        <div class="gallery-thumb ${i===0?'active':''}" data-idx="${i}" onclick="setPhoto(${i})">
+          <img src="${src}" alt="Photo ${i+1}">
+        </div>`).join('');
+      galleryHtml = `
+        <div class="photo-gallery">
+          <div class="gallery-main">
+            <img id="gallery-main-img" src="${car.photos[0]}" alt="${title}">
+          </div>
+          ${car.photos.length > 1 ? `<div class="gallery-thumbs">${thumbs}</div>` : ''}
+        </div>`;
+    } else {
+      galleryHtml = `
+        <div class="photo-gallery">
+          <div class="gallery-main">
+            <div class="no-photo">
+              <span>${carIcon()}</span>
+              <p>No photos yet</p>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Specs
+    const specRows = [
+      ['Make', car.make],
+      ['Model', car.model],
+      ['Year', car.year],
+      ['Engine', car.engine],
+      ['Power', car.power],
+      ['Drivetrain', car.drivetrain],
+      ['Colour', car.colour],
+      ['Owner', car.owner],
+    ].filter(([, v]) => v);
+
+    const specsHtml = specRows.length ? specRows.map(([k, v]) =>
+      `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${v}</span></div>`
+    ).join('') : '<p style="color:var(--text-dim);font-size:0.85rem">No specs added.</p>';
+
+    // Mods
+    const CAT_COLORS = {
+      Engine:'#e63030',Exhaust:'#ef9f27',Suspension:'#378add',
+      Exterior:'#1d9e75',Wheels:'#7f77dd',Interior:'#639922',
+      Brakes:'#d85a30',Audio:'#d4537e',Other:'#888780'
+    };
+    function normalizeMod(m) { return typeof m === 'string' ? {cat:'Other',name:m} : m; }
+
+    let modsHtml = '<p style="color:var(--text-dim);font-size:0.85rem">No mods listed.</p>';
+    if (car.mods && car.mods.length) {
+      const grouped = {};
+      car.mods.map(normalizeMod).forEach(m => {
+        (grouped[m.cat] = grouped[m.cat] || []).push(m.name);
+      });
+      modsHtml = Object.entries(grouped).map(([cat, names]) => {
+        const color = CAT_COLORS[cat] || CAT_COLORS.Other;
+        const items = names.map(n => `
+          <div class="mod-detail-item">
+            <span class="mod-detail-dot" style="background:${color}"></span>
+            <span>${n}</span>
+          </div>`).join('');
+        return `
+          <div class="mods-group">
+            <div class="mods-group-header">
+              <span class="mods-group-dot" style="background:${color}"></span>
+              ${cat}
+            </div>
+            ${items}
+          </div>`;
+      }).join('');
+    }
+
+    document.getElementById('car-detail').innerHTML = `
+      <div class="car-detail-header">
+        <div class="car-detail-title">
+          <h1>${title}</h1>
+          ${yearMake ? `<p class="year-make">${yearMake}</p>` : ''}
+        </div>
+        <div class="car-detail-actions">
+          <a href="add.html?id=${car.id}" class="btn">Edit</a>
+          <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+        </div>
+      </div>
+
+      ${galleryHtml}
+
+      <div class="detail-sections">
+        <div class="detail-card">
+          <h3>Specs</h3>
+          ${specsHtml}
+        </div>
+        <div class="detail-card">
+          <h3>Mods · ${car.mods ? car.mods.length : 0}</h3>
+          ${modsHtml}
+        </div>
+      </div>`;
+  }
+
+  function setPhoto(idx) {
+    const img = document.getElementById('gallery-main-img');
+    if (img) img.src = car.photos[idx];
+    document.querySelectorAll('.gallery-thumb').forEach((t, i) => {
+      t.classList.toggle('active', i === idx);
+    });
+  }
+
+  function confirmDelete() {
+    if (confirm(`Delete this car? This cannot be undone.`)) {
+      deleteCar(car.id);
+      location.href = 'index.html';
+    }
+  }
+</script>
+</body>
+</html>

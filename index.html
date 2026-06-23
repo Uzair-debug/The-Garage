@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Garage</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="bg.js"></script>
+
+<nav>
+  <div class="nav-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+    The <span>Garage</span>
+  </div>
+  <div class="nav-actions">
+    <a href="add.html" class="btn btn-primary">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+      Add Car
+    </a>
+  </div>
+</nav>
+
+<main>
+  <div class="hero-bio">
+    <div class="hero-bio-inner">
+      <div class="hero-bio-text">
+        <div class="hero-tag">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+          The Garage
+        </div>
+        <h1>Built different.<br><span>Every single one.</span></h1>
+        <p>This is our corner of the internet — a place to show off the builds, the mods, and the stories behind every car in the crew. Whether it's a daily driver with a few tasteful touches or a full-send track weapon, it belongs here.</p>
+        <p class="hero-sub">Got a car worth showing? Add it to the garage and let it speak for itself.</p>
+        <div class="hero-actions">
+          <a href="add.html" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+            Add your car
+          </a>
+          <a href="#garage" class="btn">Browse the garage</a>
+        </div>
+      </div>
+      <div class="hero-bio-stats" id="hero-stats">
+        <div class="stat-pill"><span id="stat-cars">0</span><label>Cars</label></div>
+        <div class="stat-pill"><span id="stat-mods">0</span><label>Mods</label></div>
+        <div class="stat-pill"><span id="stat-owners">0</span><label>Owners</label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="garage-header" id="garage">
+    <h2 id="car-count">0 Cars</h2>
+  </div>
+
+  <div class="car-grid" id="car-grid"></div>
+</main>
+
+<script src="app.js"></script>
+<script>
+  function renderGrid() {
+    const cars = getCars();
+    const grid = document.getElementById('car-grid');
+    const count = document.getElementById('car-count');
+    count.textContent = cars.length === 1 ? '1 Car' : `${cars.length} Cars`;
+
+    if (cars.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">${carIcon()}</div>
+          <h3>No cars yet</h3>
+          <p>Add the first ride to get the garage started.</p>
+          <br>
+          <a href="add.html" class="btn btn-primary" style="margin-top:0.5rem">Add a Car</a>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = cars.map(car => {
+      const img = car.photos && car.photos.length
+        ? `<img class="car-card-img" src="${car.photos[0]}" alt="${car.model}" loading="lazy">`
+        : `<div class="car-card-img-placeholder">${carIcon()}</div>`;
+
+      const modCount = car.mods && car.mods.length
+        ? `<span class="badge badge-red">${car.mods.length} mod${car.mods.length > 1 ? 's' : ''}</span>` : '';
+
+      const engine = car.engine ? `<span class="badge">${car.engine}</span>` : '';
+      const owner = car.owner ? `<span class="badge">${car.owner}</span>` : '';
+
+      return `
+        <div class="car-card" onclick="location.href='car.html?id=${car.id}'">
+          ${img}
+          <div class="car-card-body">
+            <div class="car-card-title">${car.year ? car.year + ' ' : ''}${car.make || ''} ${car.model || 'Unnamed Car'}</div>
+            <div class="car-card-sub">${car.owner ? 'Owner: ' + car.owner : '&nbsp;'}</div>
+            <div class="car-card-badges">${engine}${modCount}${owner}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  renderGrid();
+
+  // Hero stats
+  const all = getCars();
+  document.getElementById('stat-cars').textContent = all.length;
+  document.getElementById('stat-mods').textContent = all.reduce((n, c) => n + (c.mods ? c.mods.length : 0), 0);
+  const owners = new Set(all.map(c => c.owner).filter(Boolean));
+  document.getElementById('stat-owners').textContent = owners.size;
+</script>
+</body>
+</html>

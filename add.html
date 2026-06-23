@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Car – The Garage</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="bg.js"></script>
+
+<nav>
+  <div class="nav-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+    <a href="index.html">The <span style="color:var(--accent)">Garage</span></a>
+  </div>
+  <div class="nav-actions">
+    <a href="index.html" class="btn btn-ghost">Cancel</a>
+  </div>
+</nav>
+
+<div class="form-page">
+  <h1 id="page-title">Add a Car</h1>
+  <p class="subtitle" id="page-sub">Fill in the details for your build.</p>
+
+  <!-- Photos -->
+  <div class="form-section">
+    <h3>Photos</h3>
+    <div class="photo-upload" id="photo-drop">
+      <input type="file" id="photo-input" accept="image/*" multiple>
+      <div class="photo-upload-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg>
+      </div>
+      <p>Click to upload photos</p>
+      <p class="hint">JPG, PNG, WEBP — up to 5 images</p>
+    </div>
+    <div class="photo-preview-grid" id="photo-preview"></div>
+  </div>
+
+  <!-- Specs -->
+  <div class="form-section">
+    <h3>Specs</h3>
+    <div class="field-row">
+      <div class="field">
+        <label>Year</label>
+        <input type="number" id="year" placeholder="e.g. 2018" min="1900" max="2030">
+      </div>
+      <div class="field">
+        <label>Make</label>
+        <input type="text" id="make" placeholder="e.g. BMW">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Model</label>
+        <input type="text" id="model" placeholder="e.g. M3 Competition">
+      </div>
+      <div class="field">
+        <label>Engine</label>
+        <input type="text" id="engine" placeholder="e.g. 3.0L Twin-Turbo">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Power (kW)</label>
+        <input type="text" id="power" placeholder="e.g. 375 kW">
+      </div>
+      <div class="field">
+        <label>Drivetrain</label>
+        <select id="drivetrain">
+          <option value="">Select…</option>
+          <option>RWD</option>
+          <option>AWD</option>
+          <option>FWD</option>
+          <option>4WD</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Colour</label>
+        <input type="text" id="colour" placeholder="e.g. Interlagos Blue">
+      </div>
+      <div class="field">
+        <label>Owner name</label>
+        <input type="text" id="owner" placeholder="e.g. Uzair">
+      </div>
+    </div>
+  </div>
+
+  <!-- Mods -->
+  <div class="form-section">
+    <h3>Modifications</h3>
+    <div class="mods-list" id="mods-list"></div>
+    <div class="mod-add-row">
+      <select id="mod-cat">
+        <option value="Engine">Engine</option>
+        <option value="Exhaust">Exhaust</option>
+        <option value="Suspension">Suspension</option>
+        <option value="Exterior">Exterior</option>
+        <option value="Wheels">Wheels</option>
+        <option value="Interior">Interior</option>
+        <option value="Brakes">Brakes</option>
+        <option value="Audio">Audio</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="text" id="mod-input" placeholder="Describe the mod…">
+      <button class="btn" onclick="addMod()">Add</button>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <a href="index.html" class="btn">Cancel</a>
+    <button class="btn btn-primary" onclick="saveCar()">Save Car</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  let photos = [];
+  let mods = [];
+  let editId = null;
+
+  // Check if editing
+  const params = new URLSearchParams(location.search);
+  if (params.get('id')) {
+    editId = params.get('id');
+    const car = getCar(editId);
+    if (car) {
+      document.getElementById('page-title').textContent = 'Edit Car';
+      document.getElementById('page-sub').textContent = `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim();
+      document.getElementById('year').value = car.year || '';
+      document.getElementById('make').value = car.make || '';
+      document.getElementById('model').value = car.model || '';
+      document.getElementById('engine').value = car.engine || '';
+      document.getElementById('power').value = car.power || '';
+      document.getElementById('drivetrain').value = car.drivetrain || '';
+      document.getElementById('colour').value = car.colour || '';
+      document.getElementById('owner').value = car.owner || '';
+      photos = car.photos || [];
+      mods = car.mods || [];
+      renderPreviews();
+      renderMods();
+    }
+  }
+
+  // Photo handling
+  document.getElementById('photo-input').addEventListener('change', function() {
+    const files = Array.from(this.files).slice(0, 5 - photos.length);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        photos.push(e.target.result);
+        renderPreviews();
+      };
+      reader.readAsDataURL(file);
+    });
+    this.value = '';
+  });
+
+  function renderPreviews() {
+    const grid = document.getElementById('photo-preview');
+    grid.innerHTML = photos.map((src, i) => `
+      <div class="photo-thumb">
+        <img src="${src}" alt="Photo ${i+1}">
+        <button class="remove-photo" onclick="removePhoto(${i})" title="Remove">×</button>
+      </div>`).join('');
+    document.getElementById('photo-drop').style.display = photos.length >= 5 ? 'none' : '';
+  }
+
+  function removePhoto(i) {
+    photos.splice(i, 1);
+    renderPreviews();
+  }
+
+  const CAT_COLORS = {
+    Engine:     '#e63030', Exhaust:    '#ef9f27', Suspension: '#378add',
+    Exterior:   '#1d9e75', Wheels:     '#7f77dd', Interior:   '#639922',
+    Brakes:     '#d85a30', Audio:      '#d4537e', Other:      '#888780'
+  };
+
+  function normalizeMod(m) {
+    return typeof m === 'string' ? { cat: 'Other', name: m } : m;
+  }
+
+  document.getElementById('mod-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addMod(); }
+  });
+
+  function addMod() {
+    const input = document.getElementById('mod-input');
+    const val = input.value.trim();
+    if (!val) return;
+    const cat = document.getElementById('mod-cat').value;
+    mods.push({ cat, name: val });
+    input.value = '';
+    renderMods();
+  }
+
+  function removeMod(i) {
+    mods.splice(i, 1);
+    renderMods();
+  }
+
+  function renderMods() {
+    document.getElementById('mods-list').innerHTML = mods.map((m, i) => {
+      const { cat, name } = normalizeMod(m);
+      const color = CAT_COLORS[cat] || CAT_COLORS.Other;
+      const bg = color + '22';
+      return `
+        <div class="mod-item">
+          <span class="mod-cat-badge" style="background:${bg};color:${color};border:1px solid ${color}44">${cat}</span>
+          <span class="mod-item-name">${name}</span>
+          <button class="mod-item-remove" onclick="removeMod(${i})" title="Remove">×</button>
+        </div>`;
+    }).join('');
+  }
+
+  // Save
+  function saveCar() {
+    const make = document.getElementById('make').value.trim();
+    const model = document.getElementById('model').value.trim();
+    if (!make && !model) {
+      showToast('Please enter at least a make or model.', 'error');
+      return;
+    }
+    const car = {
+      id: editId || generateId(),
+      year: document.getElementById('year').value.trim(),
+      make, model,
+      engine: document.getElementById('engine').value.trim(),
+      power: document.getElementById('power').value.trim(),
+      drivetrain: document.getElementById('drivetrain').value,
+      colour: document.getElementById('colour').value.trim(),
+      owner: document.getElementById('owner').value.trim(),
+      photos,
+      mods,
+      updatedAt: Date.now()
+    };
+    upsertCar(car);
+    showToast(editId ? 'Car updated!' : 'Car added to the garage!');
+    setTimeout(() => location.href = `car.html?id=${car.id}`, 800);
+  }
+</script>
+</body>
+</html>
