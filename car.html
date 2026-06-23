@@ -54,13 +54,19 @@
 
   function render(car) {
     const title = [car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car';
-    const yearMake = [car.year, car.drivetrain ? car.drivetrain + (car.colour ? ' · ' + car.colour : '') : car.colour].filter(Boolean).join(' · ');
+    const meta = [car.year, car.drivetrain, car.colour].filter(Boolean).join(' · ');
+
+    // Status badge
+    const statusMeta = STATUS_META[car.status];
+    const statusBadge = statusMeta
+      ? `<span class="status-badge" style="background:${statusMeta.bg};color:${statusMeta.color};border:1px solid ${statusMeta.color}44">${car.status}</span>`
+      : '';
 
     // Gallery
     let galleryHtml = '';
     if (car.photos && car.photos.length) {
       const thumbs = car.photos.map((src, i) => `
-        <div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="setPhoto(${i}, ${JSON.stringify(car.photos).replace(/"/g, '&quot;')})">
+        <div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="setPhoto(${i})">
           <img src="${src}" alt="Photo ${i + 1}">
         </div>`).join('');
       galleryHtml = `
@@ -74,10 +80,7 @@
       galleryHtml = `
         <div class="photo-gallery">
           <div class="gallery-main">
-            <div class="no-photo">
-              <span>${carIcon()}</span>
-              <p>No photos yet</p>
-            </div>
+            <div class="no-photo"><span>${carIcon()}</span><p>No photos yet</p></div>
           </div>
         </div>`;
     }
@@ -86,20 +89,18 @@
     const specRows = [
       ['Make', car.make], ['Model', car.model], ['Year', car.year],
       ['Engine', car.engine], ['Power', car.power], ['Drivetrain', car.drivetrain],
-      ['Colour', car.colour], ['Owner', car.owner],
+      ['Colour', car.colour], ['Status', car.status], ['Owner', car.owner],
     ].filter(([, v]) => v);
 
     const specsHtml = specRows.length
       ? specRows.map(([k, v]) => `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${v}</span></div>`).join('')
       : '<p style="color:var(--text-dim);font-size:0.85rem">No specs added.</p>';
 
-    // Mods grouped by category
+    // Mods
     let modsHtml = '<p style="color:var(--text-dim);font-size:0.85rem">No mods listed.</p>';
     if (car.mods && car.mods.length) {
       const grouped = {};
-      car.mods.map(normalizeMod).forEach(m => {
-        (grouped[m.cat] = grouped[m.cat] || []).push(m.name);
-      });
+      car.mods.map(normalizeMod).forEach(m => { (grouped[m.cat] = grouped[m.cat] || []).push(m.name); });
       modsHtml = Object.entries(grouped).map(([cat, names]) => {
         const color = CAT_COLORS[cat] || CAT_COLORS.Other;
         return `
@@ -109,20 +110,39 @@
             </div>
             ${names.map(n => `
               <div class="mod-detail-item">
-                <span class="mod-detail-dot" style="background:${color}"></span>
-                <span>${n}</span>
+                <span class="mod-detail-dot" style="background:${color}"></span><span>${n}</span>
               </div>`).join('')}
           </div>`;
       }).join('');
     }
 
+    // Like button
+    const liked = hasLiked(car.id);
+    const likeHtml = `
+      <button class="like-btn like-btn-lg ${liked ? 'liked' : ''}" id="like-btn" onclick="handleLike('${car.id}')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
+        <span id="like-count">${car.likes || 0}</span> ${car.likes === 1 ? 'rep' : 'reps'}
+      </button>`;
+
+    // Instagram
+    const igHtml = car.instagram
+      ? `<a class="ig-link" href="https://instagram.com/${car.instagram}" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 4a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z"/><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M16.5 7.5l0 .01"/></svg>
+          @${car.instagram}
+        </a>` : '';
+
     document.getElementById('car-detail').innerHTML = `
       <div class="car-detail-header">
         <div class="car-detail-title">
-          <h1>${title}</h1>
-          ${yearMake ? `<p class="year-make">${yearMake}</p>` : ''}
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+            <h1 style="margin:0">${title}</h1>
+            ${statusBadge}
+          </div>
+          ${meta ? `<p class="year-make">${meta}</p>` : ''}
+          ${igHtml}
         </div>
         <div class="car-detail-actions">
+          ${likeHtml}
           <a href="add.html?id=${car.id}" class="btn">Edit</a>
           <button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>
         </div>
@@ -140,12 +160,30 @@
           ${modsHtml}
         </div>
       </div>`;
+
+    // store photos ref for gallery
+    window._photos = car.photos || [];
   }
 
-  function setPhoto(idx, photos) {
+  function setPhoto(idx) {
     const img = document.getElementById('gallery-main-img');
-    if (img) img.src = photos[idx];
+    if (img) img.src = window._photos[idx];
     document.querySelectorAll('.gallery-thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
+  }
+
+  async function handleLike(id) {
+    const btn = document.getElementById('like-btn');
+    if (hasLiked(id) || !btn) return;
+    const success = await likeCar(id);
+    if (success) {
+      const countEl = document.getElementById('like-count');
+      const newCount = parseInt(countEl.textContent) + 1;
+      countEl.textContent = newCount;
+      btn.nextSibling && (btn.innerHTML = btn.innerHTML.replace(/\d+ rep/, `${newCount} rep`));
+      btn.classList.add('liked');
+      btn.querySelector('svg').setAttribute('fill', 'currentColor');
+      btn.innerHTML = btn.innerHTML.replace('0 reps', `${newCount} rep${newCount === 1 ? '' : 's'}`);
+    }
   }
 
   async function confirmDelete(id) {

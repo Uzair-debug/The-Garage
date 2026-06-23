@@ -83,8 +83,32 @@
         <input type="text" id="colour" placeholder="e.g. Interlagos Blue">
       </div>
       <div class="field">
-        <label>Owner name</label>
+        <label>Build status</label>
+        <select id="status">
+          <option value="">Select…</option>
+          <option>Daily Driver</option>
+          <option>Track Build</option>
+          <option>Project Car</option>
+          <option>Stored</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Owner -->
+  <div class="form-section">
+    <h3>Owner</h3>
+    <div class="field-row">
+      <div class="field">
+        <label>Name</label>
         <input type="text" id="owner" placeholder="e.g. Uzair">
+      </div>
+      <div class="field">
+        <label>Instagram</label>
+        <div style="position:relative">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:0.9rem">@</span>
+          <input type="text" id="instagram" placeholder="username" style="padding-left:24px">
+        </div>
       </div>
     </div>
   </div>
@@ -132,7 +156,6 @@
     return typeof m === 'string' ? { cat: 'Other', name: m } : m;
   }
 
-  // Load for editing
   async function loadEdit() {
     const params = new URLSearchParams(location.search);
     if (!params.get('id')) return;
@@ -148,7 +171,9 @@
     document.getElementById('power').value = car.power || '';
     document.getElementById('drivetrain').value = car.drivetrain || '';
     document.getElementById('colour').value = car.colour || '';
+    document.getElementById('status').value = car.status || '';
     document.getElementById('owner').value = car.owner || '';
+    document.getElementById('instagram').value = car.instagram || '';
     photos = car.photos || [];
     mods = car.mods || [];
     renderPreviews();
@@ -157,7 +182,6 @@
 
   loadEdit();
 
-  // Photo handling
   document.getElementById('photo-input').addEventListener('change', function () {
     const files = Array.from(this.files).slice(0, 5 - photos.length);
     files.forEach(file => {
@@ -180,7 +204,6 @@
 
   function removePhoto(i) { photos.splice(i, 1); renderPreviews(); }
 
-  // Mods handling
   document.getElementById('mod-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); addMod(); }
   });
@@ -209,7 +232,6 @@
     }).join('');
   }
 
-  // Save
   async function saveCar() {
     const make = document.getElementById('make').value.trim();
     const model = document.getElementById('model').value.trim();
@@ -228,9 +250,10 @@
         power: document.getElementById('power').value.trim(),
         drivetrain: document.getElementById('drivetrain').value,
         colour: document.getElementById('colour').value.trim(),
+        status: document.getElementById('status').value,
         owner: document.getElementById('owner').value.trim(),
-        photos,
-        mods,
+        instagram: document.getElementById('instagram').value.trim().replace(/^@/, ''),
+        photos, mods,
         updated_at: Date.now()
       };
       await upsertCar(car);

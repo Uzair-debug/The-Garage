@@ -29,6 +29,27 @@ async function deleteCar(id) {
   if (error) throw error;
 }
 
+async function likeCar(id) {
+  const liked = getLiked();
+  if (liked.has(id)) return false;
+  const { error } = await sb().rpc('increment_likes', { car_id: id });
+  if (error) {
+    // fallback: manual increment
+    const car = await getCar(id);
+    if (car) await sb().from('cars').update({ likes: (car.likes || 0) + 1 }).eq('id', id);
+  }
+  liked.add(id);
+  localStorage.setItem('garage_liked', JSON.stringify([...liked]));
+  return true;
+}
+
+function getLiked() {
+  try { return new Set(JSON.parse(localStorage.getItem('garage_liked')) || []); }
+  catch { return new Set(); }
+}
+
+function hasLiked(id) { return getLiked().has(id); }
+
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
@@ -44,3 +65,10 @@ function showToast(msg, type = 'success') {
 function carIcon() {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>`;
 }
+
+const STATUS_META = {
+  'Daily Driver': { color: '#639922', bg: '#63992222' },
+  'Track Build':  { color: '#e63030', bg: '#e6303022' },
+  'Project Car':  { color: '#ef9f27', bg: '#ef9f2722' },
+  'Stored':       { color: '#888780', bg: '#88878022' },
+};
