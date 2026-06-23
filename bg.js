@@ -1,37 +1,4 @@
-
 (function () {
-
-  // ─── Wallpaper slideshow ─────────────────────────────────────────
-  const WALLPAPERS = ['wallpaper.jpg', 'wallpaper2.jpg', 'wallpaper3.jpg'];
-  const SLIDE_DURATION = 8000;
-  const FADE_DURATION  = 2000;
-
-  const slides = WALLPAPERS.map((src, i) => {
-    const d = document.createElement('div');
-    d.style.cssText = `
-      position:fixed;inset:0;z-index:0;pointer-events:none;
-      background:url('${src}') center/cover no-repeat fixed;
-      opacity:${i === 0 ? 1 : 0};
-      transition:opacity ${FADE_DURATION}ms ease-in-out;
-    `;
-    document.body.prepend(d);
-    return d;
-  });
-
-  // Dark overlay sits above wallpaper slides
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position:fixed;inset:0;z-index:0;pointer-events:none;
-    background:linear-gradient(to bottom,rgba(10,10,12,0.82) 0%,rgba(10,10,12,0.75) 40%,rgba(10,10,12,0.85) 100%);
-  `;
-  document.body.prepend(overlay);
-
-  let current = 0;
-  setInterval(() => {
-    slides[current].style.opacity = '0';
-    current = (current + 1) % slides.length;
-    slides[current].style.opacity = '1';
-  }, SLIDE_DURATION);
 
   // ─── Canvas ──────────────────────────────────────────────────────
   const canvas = document.createElement('canvas');
@@ -39,8 +6,7 @@
   canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;';
   document.body.prepend(canvas);
 
-  // Push everything else above the canvas and overlay
-  document.querySelectorAll('body > *:not(#bg-canvas):not([style*="z-index:0"])').forEach(el => {
+  document.querySelectorAll('body > *:not(#bg-canvas)').forEach(el => {
     el.style.position = el.style.position || 'relative';
     el.style.zIndex = el.style.zIndex || '2';
   });
@@ -54,7 +20,7 @@
     drawStatic();
   }
 
-  // ─── Static layer: drawn once, re-drawn on resize ───────────────
+  // ─── Static layer ────────────────────────────────────────────────
   let staticCanvas, sCtx;
 
   function drawStatic() {
@@ -65,6 +31,7 @@
 
     drawGrid(sCtx);
     drawSpeedometer(sCtx);
+    drawCarSilhouette(sCtx);
   }
 
   function drawGrid(c) {
@@ -98,12 +65,11 @@
     c.globalAlpha = 1;
   }
 
-function drawSpeedometer(c) {
+  function drawSpeedometer(c) {
     const cx = W * 0.82;
     const cy = H * 0.28;
     const r = Math.min(W, H) * 0.22;
 
-    // Outer ring
     c.save();
     c.strokeStyle = 'rgba(230,48,48,0.06)';
     c.lineWidth = 1.5;
@@ -111,14 +77,12 @@ function drawSpeedometer(c) {
     c.arc(cx, cy, r, 0, Math.PI * 2);
     c.stroke();
 
-    // Inner ring
     c.strokeStyle = 'rgba(230,48,48,0.04)';
     c.lineWidth = 1;
     c.beginPath();
     c.arc(cx, cy, r * 0.75, 0, Math.PI * 2);
     c.stroke();
 
-    // Tick marks
     for (let i = 0; i < 24; i++) {
       const angle = (i / 24) * Math.PI * 2;
       const isMajor = i % 4 === 0;
@@ -131,7 +95,6 @@ function drawSpeedometer(c) {
       c.stroke();
     }
 
-    // Needle sweep arc
     c.strokeStyle = 'rgba(230,48,48,0.08)';
     c.lineWidth = 3;
     c.lineCap = 'round';
@@ -143,7 +106,6 @@ function drawSpeedometer(c) {
   }
 
   function drawCarSilhouette(c) {
-    // Sports car profile, centered left-ish, large and faint
     const sx = W * 0.04;
     const sy = H * 0.52;
     const scaleX = W * 0.0013;
@@ -156,35 +118,27 @@ function drawSpeedometer(c) {
     c.strokeStyle = 'rgba(255,255,255,0.04)';
     c.lineWidth = 1 / scaleX;
 
-    // Car body path (sports car silhouette)
     c.beginPath();
-    // Roof & windshield
     c.moveTo(80, 80);
     c.lineTo(110, 30);
     c.lineTo(210, 20);
     c.lineTo(270, 80);
-    // Rear
     c.lineTo(310, 80);
     c.lineTo(320, 95);
     c.lineTo(320, 108);
-    // Rear wheel arch
     c.quadraticCurveTo(290, 130, 258, 130);
     c.quadraticCurveTo(226, 130, 220, 108);
-    // Sill
     c.lineTo(110, 108);
-    // Front wheel arch
     c.quadraticCurveTo(104, 130, 72, 130);
     c.quadraticCurveTo(40, 130, 34, 108);
     c.lineTo(20, 108);
     c.lineTo(10, 95);
-    // Front bumper
     c.lineTo(10, 85);
     c.lineTo(40, 80);
     c.closePath();
     c.fill();
     c.stroke();
 
-    // Wheels
     c.beginPath();
     c.arc(72, 120, 22, 0, Math.PI * 2);
     c.fillStyle = 'rgba(255,255,255,0.03)';
@@ -197,7 +151,6 @@ function drawSpeedometer(c) {
     c.fill();
     c.stroke();
 
-    // Window
     c.beginPath();
     c.moveTo(115, 75);
     c.lineTo(130, 38);
@@ -210,7 +163,7 @@ function drawSpeedometer(c) {
     c.restore();
   }
 
-  // ─── Animated particles (sparks / embers) ───────────────────────
+  // ─── Animated particles (sparks / embers) ────────────────────────
   const PARTICLE_COUNT = 55;
   const sparks = Array.from({ length: PARTICLE_COUNT }, () => spawnSpark(true));
 
@@ -228,47 +181,41 @@ function drawSpeedometer(c) {
     };
   }
 
-  // ─── Speed lines (occasional sweep) ─────────────────────────────
+  // ─── Speed lines ─────────────────────────────────────────────────
   let speedLines = [];
   let nextSweep = 0;
 
   function triggerSweep() {
     const y = Math.random() * H * 0.6 + H * 0.1;
     const height = Math.random() * 3 + 1;
-    speedLines.push({ y, height, x: -W * 0.3, alpha: 0.18, done: false });
+    speedLines.push({ y, height, x: -W * 0.3, alpha: 0.18 });
   }
 
   // ─── Main loop ───────────────────────────────────────────────────
-  let last = 0;
   function animate(ts) {
     requestAnimationFrame(animate);
-
     ctx.clearRect(0, 0, W, H);
     if (staticCanvas) ctx.drawImage(staticCanvas, 0, 0);
 
-    // Sparks
     sparks.forEach((s, i) => {
       s.x += s.vx;
       s.y += s.vy;
       s.life -= s.decay;
       s.vx += (Math.random() - 0.5) * 0.02;
-
       if (s.life <= 0 || s.y < -10) {
         sparks[i] = spawnSpark(false);
         sparks[i].x = Math.random() * W;
         return;
       }
-
       const alpha = s.baseAlpha * s.life;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
       ctx.fillStyle = s.red
-        ? `rgba(230,${48 + Math.random() * 30 | 0},${30 + Math.random() * 20 | 0},${alpha})`
-        : `rgba(255,${200 + Math.random() * 50 | 0},${100 + Math.random() * 80 | 0},${alpha})`;
+        ? `rgba(230,${48 + (Math.random() * 30 | 0)},${30 + (Math.random() * 20 | 0)},${alpha})`
+        : `rgba(255,${200 + (Math.random() * 50 | 0)},${100 + (Math.random() * 80 | 0)},${alpha})`;
       ctx.fill();
     });
 
-    // Speed lines
     if (ts - nextSweep > 3500 + Math.random() * 4000) {
       triggerSweep();
       nextSweep = ts;
@@ -278,7 +225,6 @@ function drawSpeedometer(c) {
       l.x += W * 0.04;
       l.alpha *= 0.97;
       if (l.alpha < 0.005 || l.x > W * 1.2) return false;
-
       const grad = ctx.createLinearGradient(l.x, 0, l.x + W * 0.35, 0);
       grad.addColorStop(0, `rgba(230,48,48,0)`);
       grad.addColorStop(0.2, `rgba(230,48,48,${l.alpha})`);
