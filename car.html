@@ -25,6 +25,7 @@
 </div>
 
 <script src="app.js"></script>
+<script src="auth.js"></script>
 <script>
   const CAT_COLORS = {
     Engine:'#e63030', Exhaust:'#ef9f27', Suspension:'#378add',
@@ -35,9 +36,13 @@
   function normalizeMod(m) { return typeof m === 'string' ? { cat: 'Other', name: m } : m; }
 
   async function init() {
+    initAuth();
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
-    const car = id ? await getCar(id) : null;
+    const [car, currentUser] = await Promise.all([
+      id ? getCar(id) : null,
+      getCurrentUser()
+    ]);
 
     if (!car) {
       document.getElementById('car-detail').innerHTML = `
@@ -48,11 +53,12 @@
       return;
     }
 
+    const isOwner = currentUser && (!car.user_id || car.user_id === currentUser.id);
     document.title = `${car.year ? car.year + ' ' : ''}${car.make} ${car.model} – The Garage`;
-    render(car);
+    render(car, isOwner);
   }
 
-  function render(car) {
+  function render(car, isOwner) {
     const title = [car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car';
     const meta = [car.year, car.drivetrain, car.colour].filter(Boolean).join(' · ');
 
@@ -143,8 +149,8 @@
         </div>
         <div class="car-detail-actions">
           ${likeHtml}
-          <a href="add.html?id=${car.id}" class="btn">Edit</a>
-          <button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>
+          ${isOwner ? `<a href="add.html?id=${car.id}" class="btn">Edit</a>` : ''}
+          ${isOwner ? `<button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>` : ''}
         </div>
       </div>
 

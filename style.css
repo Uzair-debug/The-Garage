@@ -802,6 +802,115 @@ main {
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* AUTH MODAL */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.15s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.auth-modal {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  width: 100%;
+  max-width: 380px;
+  margin: 1rem;
+  animation: slide-up 0.2s ease;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.auth-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.9rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+.auth-close:hover { color: var(--text); background: var(--surface2); }
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.5px;
+}
+.auth-logo svg { color: var(--accent); }
+
+.auth-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.auth-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.auth-form .field { margin-bottom: 1rem; }
+.auth-form .field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.auth-error {
+  font-size: 0.8rem;
+  color: #e65050;
+  min-height: 1.2em;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.auth-toggle {
+  margin-top: 1.2rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.auth-toggle button {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+.auth-toggle button:hover { opacity: 0.8; }
+
 /* RESPONSIVE */
 @media (max-width: 600px) {
   .hero h1 { font-size: 1.7rem; }

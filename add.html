@@ -141,10 +141,12 @@
 </div>
 
 <script src="app.js"></script>
+<script src="auth.js"></script>
 <script>
   let photos = [];
   let mods = [];
   let editId = null;
+  let _authedUser = null;
 
   const CAT_COLORS = {
     Engine:'#e63030', Exhaust:'#ef9f27', Suspension:'#378add',
@@ -158,10 +160,24 @@
 
   async function loadEdit() {
     const params = new URLSearchParams(location.search);
-    if (!params.get('id')) return;
-    editId = params.get('id');
+    editId = params.get('id') || null;
+
+    // Require auth before anything
+    await new Promise(resolve => requireAuth(user => { _authedUser = user; resolve(); }));
+    initAuth();
+
+    if (!editId) return;
+
     const car = await getCar(editId);
     if (!car) return;
+
+    // Block editing someone else's car
+    if (car.user_id && car.user_id !== _authedUser.id) {
+      alert("You can only edit your own cars.");
+      location.href = `car.html?id=${editId}`;
+      return;
+    }
+
     document.getElementById('page-title').textContent = 'Edit Car';
     document.getElementById('page-sub').textContent = `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim();
     document.getElementById('year').value = car.year || '';
@@ -254,6 +270,7 @@
         owner: document.getElementById('owner').value.trim(),
         instagram: document.getElementById('instagram').value.trim().replace(/^@/, ''),
         photos, mods,
+        user_id: _authedUser?.id || null,
         updated_at: Date.now()
       };
       await upsertCar(car);
