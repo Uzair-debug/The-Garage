@@ -31,7 +31,6 @@
 
     drawGrid(sCtx);
     drawSpeedometer(sCtx);
-    drawCarSilhouette(sCtx);
   }
 
   function drawGrid(c) {
