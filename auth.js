@@ -1,5 +1,11 @@
 // ─── Auth state ──────────────────────────────────────────────────
+const ADMIN_EMAIL = 'mogamaduzair@gmail.com';
+
 let _currentUser = null;
+
+function isAdmin(user) {
+  return !!user && user.email === ADMIN_EMAIL;
+}
 
 async function getCurrentUser() {
   const { data: { user } } = await sb().auth.getUser();

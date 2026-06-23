@@ -172,7 +172,7 @@
     if (!car) return;
 
     // Block editing someone else's car
-    if (car.user_id !== _authedUser.id) {
+    if (car.user_id !== _authedUser.id && !isAdmin(_authedUser)) {
       alert("You can only edit your own cars.");
       location.href = `car.html?id=${editId}`;
       return;

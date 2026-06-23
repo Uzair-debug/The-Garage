@@ -53,7 +53,7 @@
       return;
     }
 
-    const isOwner = !!currentUser && car.user_id === currentUser.id;
+    const isOwner = !!currentUser && (car.user_id === currentUser.id || isAdmin(currentUser));
     document.title = `${car.year ? car.year + ' ' : ''}${car.make} ${car.model} – The Garage`;
     render(car, isOwner);
   }
