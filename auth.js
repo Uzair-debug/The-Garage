@@ -56,7 +56,7 @@ async function signOut() {
 }
 
 // ─── Auth modal ──────────────────────────────────────────────────
-function showAuthModal(onSuccess) {
+function showAuthModal(onSuccess, onCancel) {
   if (document.getElementById('auth-modal-overlay')) return;
 
   const overlay = document.createElement('div');
@@ -103,11 +103,16 @@ function showAuthModal(onSuccess) {
   });
 
   overlay._onSuccess = onSuccess;
+  overlay._onCancel = onCancel;
 }
 
 function closeAuthModal() {
   const el = document.getElementById('auth-modal-overlay');
-  if (el) el.remove();
+  if (!el) return;
+  const cancelled = !el._success;
+  const onCancel = el._onCancel;
+  el.remove();
+  if (cancelled && typeof onCancel === 'function') onCancel();
 }
 
 let _authMode = 'signin';
@@ -152,14 +157,15 @@ async function submitAuth() {
   _currentUser = data.user;
   const overlay = document.getElementById('auth-modal-overlay');
   const cb = overlay?._onSuccess;
+  if (overlay) overlay._success = true; // prevents the cancel callback firing
   closeAuthModal();
   renderNavAuth(_currentUser);
   if (cb) cb(_currentUser);
 }
 
 // ─── Guard: redirect to modal if not logged in ───────────────────
-async function requireAuth(onAuthed) {
+async function requireAuth(onAuthed, onCancel) {
   const user = await getCurrentUser();
   if (user) { onAuthed(user); return; }
-  showAuthModal(onAuthed);
+  showAuthModal(onAuthed, onCancel);
 }

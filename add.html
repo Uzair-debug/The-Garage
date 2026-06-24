@@ -162,8 +162,11 @@
     const params = new URLSearchParams(location.search);
     editId = params.get('id') || null;
 
-    // Require auth before anything
-    await new Promise(resolve => requireAuth(user => { _authedUser = user; resolve(); }));
+    // Require auth before anything — bounce home if they dismiss the modal
+    await new Promise(resolve => requireAuth(
+      user => { _authedUser = user; resolve(); },
+      () => { location.href = 'index.html'; }
+    ));
     initAuth();
 
     if (!editId) return;
@@ -273,6 +276,8 @@
   }
 
   async function saveCar() {
+    if (!_authedUser) { showToast('Please sign in to add a car.', 'error'); return; }
+
     const make = document.getElementById('make').value.trim();
     const model = document.getElementById('model').value.trim();
     if (!make && !model) { showToast('Please enter at least a make or model.', 'error'); return; }
