@@ -36,7 +36,11 @@ function renderNavAuth(user) {
 
   if (user) {
     const short = user.email.split('@')[0];
+    const adminLink = isAdmin(user)
+      ? `<a class="btn btn-ghost" href="admin.html" style="font-size:0.78rem;padding:0.35rem 0.7rem">Members</a>`
+      : '';
     el.innerHTML = `
+      ${adminLink}
       <span style="font-size:0.78rem;color:var(--text-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${user.email}">${short}</span>
       <button class="btn btn-ghost" onclick="signOut()" style="font-size:0.78rem;padding:0.35rem 0.7rem">Sign out</button>`;
   } else {

@@ -32,6 +32,16 @@ async function deleteCar(id) {
   if (error) throw error;
 }
 
+// Admin-only: list registered members (RLS restricts this to the admin).
+async function getProfiles() {
+  const { data, error } = await sb()
+    .from('profiles')
+    .select('id,email,created_at')
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return null; }
+  return data || [];
+}
+
 async function likeCar(id) {
   const liked = getLiked();
   if (liked.has(id)) return false;
