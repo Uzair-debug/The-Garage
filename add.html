@@ -215,7 +215,8 @@
         renderPreviews();
       } catch (err) {
         console.error(err);
-        showToast('Photo upload failed — try again.', 'error');
+        const msg = err?.message || err?.error || err?.statusCode || 'unknown error';
+        showToast('Upload failed: ' + msg, 'error');
       } finally {
         _uploading--;
         updateUploadState();
