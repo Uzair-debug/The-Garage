@@ -83,32 +83,35 @@ function escapeHtml(value) {
 const PHOTO_BUCKET = 'car-photos';
 const MAX_PHOTO_DIM = 1600; // px, longest edge
 
-// Read a File, downscale + re-encode to a JPEG Blob to cut upload size.
-function compressImage(file) {
+// Decode a File honouring its EXIF orientation, downscale, and re-encode
+// to a JPEG Blob. Using createImageBitmap with imageOrientation:'from-image'
+// bakes the correct rotation in, so phone photos no longer show sideways.
+async function compressImage(file) {
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch (e) {
+    // Older engines: decode without orientation handling rather than failing.
+    bitmap = await createImageBitmap(file);
+  }
+
+  let { width, height } = bitmap;
+  const scale = Math.min(1, MAX_PHOTO_DIM / Math.max(width, height));
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+  if (bitmap.close) bitmap.close();
+
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        const scale = Math.min(1, MAX_PHOTO_DIM / Math.max(width, height));
-        width = Math.round(width * scale);
-        height = Math.round(height * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          blob => blob ? resolve(blob) : reject(new Error('Compression failed')),
-          'image/jpeg',
-          0.82
-        );
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    canvas.toBlob(
+      blob => blob ? resolve(blob) : reject(new Error('Compression failed')),
+      'image/jpeg',
+      0.82
+    );
   });
 }
 
