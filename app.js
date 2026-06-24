@@ -7,8 +7,11 @@ function sb() {
   return _sb;
 }
 
+// Columns needed for the home grid — avoids pulling full photo arrays we don't show.
+const LIST_COLUMNS = 'id,year,make,model,engine,owner,status,likes,mods,photos,updated_at';
+
 async function getCars() {
-  const { data, error } = await sb().from('cars').select('*').order('updated_at', { ascending: false });
+  const { data, error } = await sb().from('cars').select(LIST_COLUMNS).order('updated_at', { ascending: false });
   if (error) { console.error(error); return []; }
   return data || [];
 }
@@ -51,7 +54,66 @@ function getLiked() {
 function hasLiked(id) { return getLiked().has(id); }
 
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  return (crypto.randomUUID && crypto.randomUUID()) ||
+    (Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+}
+
+// ─── Escape user-entered text before injecting into HTML ──────────
+function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ─── Photo handling: compress client-side, upload to Storage ──────
+const PHOTO_BUCKET = 'car-photos';
+const MAX_PHOTO_DIM = 1600; // px, longest edge
+
+// Read a File, downscale + re-encode to a JPEG Blob to cut upload size.
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        const scale = Math.min(1, MAX_PHOTO_DIM / Math.max(width, height));
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          blob => blob ? resolve(blob) : reject(new Error('Compression failed')),
+          'image/jpeg',
+          0.82
+        );
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Compress + upload a File to Storage; returns the public URL.
+async function uploadPhoto(file) {
+  const blob = await compressImage(file);
+  const path = `${generateId()}.jpg`;
+  const { error } = await sb().storage.from(PHOTO_BUCKET).upload(path, blob, {
+    contentType: 'image/jpeg',
+    cacheControl: '3600',
+    upsert: false,
+  });
+  if (error) throw error;
+  const { data } = sb().storage.from(PHOTO_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
 }
 
 function showToast(msg, type = 'success') {

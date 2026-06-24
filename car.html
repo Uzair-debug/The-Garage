@@ -59,13 +59,13 @@
   }
 
   function render(car, isOwner) {
-    const title = [car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car';
-    const meta = [car.year, car.drivetrain, car.colour].filter(Boolean).join(' · ');
+    const title = escapeHtml([car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car');
+    const meta = escapeHtml([car.year, car.drivetrain, car.colour].filter(Boolean).join(' · '));
 
     // Status badge
     const statusMeta = STATUS_META[car.status];
     const statusBadge = statusMeta
-      ? `<span class="status-badge" style="background:${statusMeta.bg};color:${statusMeta.color};border:1px solid ${statusMeta.color}44">${car.status}</span>`
+      ? `<span class="status-badge" style="background:${statusMeta.bg};color:${statusMeta.color};border:1px solid ${statusMeta.color}44">${escapeHtml(car.status)}</span>`
       : '';
 
     // Gallery
@@ -73,12 +73,12 @@
     if (car.photos && car.photos.length) {
       const thumbs = car.photos.map((src, i) => `
         <div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="setPhoto(${i})">
-          <img src="${src}" alt="Photo ${i + 1}">
+          <img src="${encodeURI(src)}" alt="Photo ${i + 1}">
         </div>`).join('');
       galleryHtml = `
         <div class="photo-gallery">
           <div class="gallery-main">
-            <img id="gallery-main-img" src="${car.photos[0]}" alt="${title}">
+            <img id="gallery-main-img" src="${encodeURI(car.photos[0])}" alt="${title}">
           </div>
           ${car.photos.length > 1 ? `<div class="gallery-thumbs">${thumbs}</div>` : ''}
         </div>`;
@@ -99,7 +99,7 @@
     ].filter(([, v]) => v);
 
     const specsHtml = specRows.length
-      ? specRows.map(([k, v]) => `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${v}</span></div>`).join('')
+      ? specRows.map(([k, v]) => `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${escapeHtml(v)}</span></div>`).join('')
       : '<p style="color:var(--text-dim);font-size:0.85rem">No specs added.</p>';
 
     // Mods
@@ -112,11 +112,11 @@
         return `
           <div class="mods-group">
             <div class="mods-group-header">
-              <span class="mods-group-dot" style="background:${color}"></span>${cat}
+              <span class="mods-group-dot" style="background:${color}"></span>${escapeHtml(cat)}
             </div>
             ${names.map(n => `
               <div class="mod-detail-item">
-                <span class="mod-detail-dot" style="background:${color}"></span><span>${n}</span>
+                <span class="mod-detail-dot" style="background:${color}"></span><span>${escapeHtml(n)}</span>
               </div>`).join('')}
           </div>`;
       }).join('');
@@ -131,10 +131,11 @@
       </button>`;
 
     // Instagram
-    const igHtml = car.instagram
-      ? `<a class="ig-link" href="https://instagram.com/${car.instagram}" target="_blank" rel="noopener">
+    const igHandle = (car.instagram || '').replace(/[^A-Za-z0-9._]/g, '');
+    const igHtml = igHandle
+      ? `<a class="ig-link" href="https://instagram.com/${encodeURIComponent(igHandle)}" target="_blank" rel="noopener">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 4a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z"/><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M16.5 7.5l0 .01"/></svg>
-          @${car.instagram}
+          @${escapeHtml(igHandle)}
         </a>` : '';
 
     document.getElementById('car-detail').innerHTML = `

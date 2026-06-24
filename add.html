@@ -198,15 +198,39 @@
 
   loadEdit();
 
-  document.getElementById('photo-input').addEventListener('change', function () {
+  let _uploading = 0;
+
+  document.getElementById('photo-input').addEventListener('change', async function () {
     const files = Array.from(this.files).slice(0, 5 - photos.length);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => { photos.push(e.target.result); renderPreviews(); };
-      reader.readAsDataURL(file);
-    });
     this.value = '';
+    for (const file of files) {
+      _uploading++;
+      updateUploadState();
+      try {
+        const url = await uploadPhoto(file);
+        photos.push(url);
+        renderPreviews();
+      } catch (err) {
+        console.error(err);
+        showToast('Photo upload failed — try again.', 'error');
+      } finally {
+        _uploading--;
+        updateUploadState();
+      }
+    }
   });
+
+  function updateUploadState() {
+    const drop = document.getElementById('photo-drop');
+    const saveBtn = document.getElementById('save-btn');
+    if (_uploading > 0) {
+      drop.querySelector('p').textContent = `Uploading ${_uploading} photo${_uploading > 1 ? 's' : ''}…`;
+      saveBtn.disabled = true;
+    } else {
+      drop.querySelector('p').textContent = 'Click to upload photos';
+      saveBtn.disabled = false;
+    }
+  }
 
   function renderPreviews() {
     const grid = document.getElementById('photo-preview');

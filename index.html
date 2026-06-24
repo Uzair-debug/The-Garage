@@ -130,16 +130,16 @@
 
     grid.innerHTML = cars.map(car => {
       const img = car.photos && car.photos.length
-        ? `<img class="car-card-img" src="${car.photos[0]}" alt="${car.model}" loading="lazy">`
+        ? `<img class="car-card-img" src="${encodeURI(car.photos[0])}" alt="${escapeHtml(car.model)}" loading="lazy">`
         : `<div class="car-card-img-placeholder">${carIcon()}</div>`;
 
       const statusMeta = STATUS_META[car.status];
       const statusBadge = statusMeta
-        ? `<span class="badge" style="background:${statusMeta.bg};color:${statusMeta.color};border-color:${statusMeta.color}44">${car.status}</span>` : '';
+        ? `<span class="badge" style="background:${statusMeta.bg};color:${statusMeta.color};border-color:${statusMeta.color}44">${escapeHtml(car.status)}</span>` : '';
 
       const modCount = car.mods?.length
         ? `<span class="badge badge-red">${car.mods.length} mod${car.mods.length > 1 ? 's' : ''}</span>` : '';
-      const engine = car.engine ? `<span class="badge">${car.engine}</span>` : '';
+      const engine = car.engine ? `<span class="badge">${escapeHtml(car.engine)}</span>` : '';
 
       const liked = hasLiked(car.id);
       const likeBtn = `
@@ -154,8 +154,8 @@
           <div class="car-card-body">
             <div class="car-card-header">
               <div>
-                <div class="car-card-title">${car.year ? car.year + ' ' : ''}${car.make || ''} ${car.model || 'Unnamed Car'}</div>
-                <div class="car-card-sub">${car.owner ? car.owner : '&nbsp;'}</div>
+                <div class="car-card-title">${car.year ? escapeHtml(car.year) + ' ' : ''}${escapeHtml(car.make || '')} ${escapeHtml(car.model || 'Unnamed Car')}</div>
+                <div class="car-card-sub">${car.owner ? escapeHtml(car.owner) : '&nbsp;'}</div>
               </div>
               ${likeBtn}
             </div>
