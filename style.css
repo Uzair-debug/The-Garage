@@ -1105,6 +1105,15 @@ input, textarea { caret-color: var(--accent); }
   /* Toast spans the width so it never clips */
   .toast { left: 1rem; right: 1rem; bottom: 1rem; text-align: center; }
 
+  /* Mod add-row: category on its own line, input + Add share the next */
+  .mod-add-row { flex-wrap: wrap; }
+  .mod-add-row select { width: 100%; flex-basis: 100%; }
+  .mod-add-row input { flex: 1; min-width: 0; }
+  .mod-add-row .btn { flex-shrink: 0; }
+
+  /* Long mod names wrap instead of pushing the row wider */
+  .mod-item-name { min-width: 0; word-break: break-word; }
+
   /* Lightbox controls sized for thumbs, clear of the image */
   .lightbox-nav { width: 40px; height: 40px; font-size: 1.2rem; }
   .lightbox-nav.prev { left: 0.5rem; }
