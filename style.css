@@ -1086,6 +1086,15 @@ input, textarea { caret-color: var(--accent); }
 
 /* ── Phones ── */
 @media (max-width: 600px) {
+  /* Navbar: shrink controls so the Add Car button always fits */
+  nav { gap: 8px; }
+  .nav-logo { font-size: 1rem; gap: 7px; min-width: 0; }
+  .nav-logo svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .nav-actions { gap: 6px; }
+  .nav-actions .btn { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+  #nav-auth { gap: 6px; margin-left: 4px; }
+  #nav-auth span { max-width: 56px; }
+
   .car-grid { grid-template-columns: 1fr; gap: 0.85rem; }
   .car-card-img, .car-card-img-placeholder { height: 200px; }
 
