@@ -82,7 +82,20 @@
 <script>
   let allCars = [];
 
+  function renderSkeletons(n = 6) {
+    document.getElementById('car-grid').innerHTML = Array.from({ length: n }).map(() => `
+      <div class="skeleton-card">
+        <div class="skeleton-img skeleton"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line skeleton"></div>
+          <div class="skeleton-line sm skeleton"></div>
+          <div class="skeleton-line badges skeleton"></div>
+        </div>
+      </div>`).join('');
+  }
+
   async function init() {
+    renderSkeletons();
     allCars = await getCars();
 
     document.getElementById('stat-cars').textContent = allCars.length;

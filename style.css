@@ -989,6 +989,84 @@ input, textarea { caret-color: var(--accent); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Loading skeletons */
+.skeleton-card {
+  background: rgba(22,22,26,0.5);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.skeleton-img { height: 180px; }
+.skeleton-body { padding: 0.85rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.skeleton-line { height: 12px; border-radius: 6px; }
+.skeleton-line.sm { width: 55%; height: 10px; }
+.skeleton-line.badges { width: 70%; height: 18px; margin-top: 4px; }
+.skeleton {
+  background: linear-gradient(100deg, var(--surface2) 30%, #2a2a32 50%, var(--surface2) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* Photo lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.18s ease;
+}
+.lightbox img {
+  max-width: 92vw;
+  max-height: 88vh;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 20px 60px -20px rgba(0,0,0,0.8);
+  animation: slide-up 0.2s ease;
+}
+.lightbox-close {
+  position: absolute;
+  top: 1rem; right: 1.25rem;
+  background: none; border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 2rem; line-height: 1;
+  cursor: pointer;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.lightbox-nav {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+.lightbox-nav.prev { left: 1.25rem; }
+.lightbox-nav.next { right: 1.25rem; }
+.lightbox-count {
+  position: absolute;
+  bottom: 1.25rem; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+.gallery-main img { cursor: zoom-in; }
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
