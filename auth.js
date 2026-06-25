@@ -35,19 +35,43 @@ function renderNavAuth(user) {
   }
 
   if (user) {
-    const short = user.email.split('@')[0];
-    const adminLink = isAdmin(user)
-      ? `<a class="btn btn-ghost" href="admin.html" style="font-size:0.78rem;padding:0.35rem 0.7rem">Members</a>`
+    const initial = (user.email[0] || '?').toUpperCase();
+    const adminItem = isAdmin(user)
+      ? `<a class="user-menu-item" href="admin.html">Members</a>`
       : '';
     el.innerHTML = `
-      ${adminLink}
-      <span style="font-size:0.78rem;color:var(--text-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${user.email}">${short}</span>
-      <button class="btn btn-ghost" onclick="signOut()" style="font-size:0.78rem;padding:0.35rem 0.7rem">Sign out</button>`;
+      <div class="user-menu">
+        <button class="user-avatar" onclick="toggleUserMenu(event)" title="${escapeHtml(user.email)}" aria-label="Account menu">${escapeHtml(initial)}</button>
+        <div class="user-menu-panel" id="user-menu-panel">
+          <div class="user-menu-email">${escapeHtml(user.email)}</div>
+          ${adminItem}
+          <button class="user-menu-item danger" onclick="signOut()">Sign out</button>
+        </div>
+      </div>`;
   } else {
     el.innerHTML = `
       <button class="btn" onclick="showAuthModal()" style="font-size:0.78rem;padding:0.35rem 0.8rem">Sign in</button>`;
   }
 }
+
+// ─── User menu dropdown ──────────────────────────────────────────
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('user-menu-panel');
+  if (!panel) return;
+  const open = panel.classList.toggle('open');
+  if (open) {
+    setTimeout(() => document.addEventListener('click', closeUserMenu), 0);
+    document.addEventListener('keydown', _userMenuEsc);
+  }
+}
+function closeUserMenu() {
+  const panel = document.getElementById('user-menu-panel');
+  if (panel) panel.classList.remove('open');
+  document.removeEventListener('click', closeUserMenu);
+  document.removeEventListener('keydown', _userMenuEsc);
+}
+function _userMenuEsc(e) { if (e.key === 'Escape') closeUserMenu(); }
 
 // ─── Sign out ────────────────────────────────────────────────────
 async function signOut() {
