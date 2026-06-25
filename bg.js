@@ -104,64 +104,6 @@
     c.restore();
   }
 
-  function drawCarSilhouette(c) {
-    const sx = W * 0.04;
-    const sy = H * 0.52;
-    const scaleX = W * 0.0013;
-    const scaleY = scaleX;
-
-    c.save();
-    c.translate(sx, sy);
-    c.scale(scaleX, scaleY);
-    c.fillStyle = 'rgba(255,255,255,0.025)';
-    c.strokeStyle = 'rgba(255,255,255,0.04)';
-    c.lineWidth = 1 / scaleX;
-
-    c.beginPath();
-    c.moveTo(80, 80);
-    c.lineTo(110, 30);
-    c.lineTo(210, 20);
-    c.lineTo(270, 80);
-    c.lineTo(310, 80);
-    c.lineTo(320, 95);
-    c.lineTo(320, 108);
-    c.quadraticCurveTo(290, 130, 258, 130);
-    c.quadraticCurveTo(226, 130, 220, 108);
-    c.lineTo(110, 108);
-    c.quadraticCurveTo(104, 130, 72, 130);
-    c.quadraticCurveTo(40, 130, 34, 108);
-    c.lineTo(20, 108);
-    c.lineTo(10, 95);
-    c.lineTo(10, 85);
-    c.lineTo(40, 80);
-    c.closePath();
-    c.fill();
-    c.stroke();
-
-    c.beginPath();
-    c.arc(72, 120, 22, 0, Math.PI * 2);
-    c.fillStyle = 'rgba(255,255,255,0.03)';
-    c.fill();
-    c.strokeStyle = 'rgba(255,255,255,0.05)';
-    c.stroke();
-
-    c.beginPath();
-    c.arc(258, 120, 22, 0, Math.PI * 2);
-    c.fill();
-    c.stroke();
-
-    c.beginPath();
-    c.moveTo(115, 75);
-    c.lineTo(130, 38);
-    c.lineTo(205, 30);
-    c.lineTo(255, 75);
-    c.closePath();
-    c.fillStyle = 'rgba(230,48,48,0.04)';
-    c.fill();
-
-    c.restore();
-  }
-
   // ─── Animated particles (sparks / embers) ────────────────────────
   const PARTICLE_COUNT = 55;
   const sparks = Array.from({ length: PARTICLE_COUNT }, () => spawnSpark(true));

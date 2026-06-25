@@ -273,21 +273,6 @@ main {
 .toolbar-right select option { background: var(--surface2); }
 
 /* GARAGE GRID */
-.garage-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-}
-
-.garage-header h2 {
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--text-muted);
-}
-
 .car-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -615,17 +600,6 @@ main {
   margin: 0 auto;
   padding: 2rem 1.5rem;
 }
-
-.car-detail-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  margin-bottom: 1.5rem;
-  cursor: pointer;
-}
-.car-detail-back:hover { color: var(--text); }
 
 .car-detail-header {
   display: flex;
@@ -958,7 +932,6 @@ main {
 
 /* RESPONSIVE */
 @media (max-width: 600px) {
-  .hero h1 { font-size: 1.7rem; }
   .field-row { grid-template-columns: 1fr; }
   nav { padding: 0.75rem 1rem; }
   main, .form-page, .car-detail { padding: 1.25rem 1rem; }
@@ -1213,7 +1186,6 @@ input, textarea { caret-color: var(--accent); }
   .nav-actions { gap: 6px; }
   .nav-actions .btn { padding: 0.4rem 0.7rem; font-size: 0.8rem; }
   #nav-auth { gap: 6px; margin-left: 4px; }
-  #nav-auth span { max-width: 56px; }
 
   .car-grid { grid-template-columns: 1fr; gap: 0.85rem; }
   .car-card-img, .car-card-img-placeholder { height: 200px; }

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Callouts – The Garage</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d0d0f">
+  <link rel="apple-touch-icon" href="icon.svg">
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -30,6 +33,7 @@
 
 <script src="app.js"></script>
 <script src="auth.js"></script>
+<script src="push.js"></script>
 <script>
   function fmtDate(iso) {
     if (!iso) return '';
@@ -50,35 +54,39 @@
       return;
     }
 
-    const callouts = await getMyCallouts();
-    render(callouts);
+    const [incoming, sent] = await Promise.all([getMyCallouts(), getMySentCallouts()]);
+    render(incoming, sent);
 
     // Mark everything read once viewed
-    const unread = callouts.filter(c => !c.read).map(c => c.id);
-    if (unread.length) {
-      await markCalloutsRead(unread);
+    const unreadIn = incoming.filter(c => !c.read).map(c => c.id);
+    const unreadResp = sent.filter(c => c.requester_unread).map(c => c.id);
+    if (unreadIn.length) await markCalloutsRead(unreadIn);
+    if (unreadResp.length) await markResponsesRead(unreadResp);
+    if (unreadIn.length || unreadResp.length) {
       const dot = document.getElementById('avatar-dot');
       if (dot) dot.style.display = 'none';
     }
   }
 
-  function render(callouts) {
-    if (!callouts.length) {
-      document.getElementById('page-sub').textContent = 'Requests to link up about your cars.';
-      document.getElementById('callout-content').innerHTML = `
-        <div style="text-align:center;padding:3rem 0;color:var(--text-muted)">
-          <p>No callouts yet. When someone requests a callout on one of your cars, it shows up here.</p>
-        </div>`;
-      return;
-    }
-
-    const unreadCount = callouts.filter(c => !c.read).length;
+  function render(incoming, sent) {
+    const inHtml = renderIncoming(incoming);
+    const sentHtml = renderSent(sent);
+    const total = incoming.length + sent.length;
     document.getElementById('page-sub').textContent =
-      `${callouts.length} request${callouts.length === 1 ? '' : 's'}` +
-      (unreadCount ? ` · ${unreadCount} new` : '');
+      total ? 'Your callout requests and responses.' : 'Requests to link up about your cars.';
 
-    document.getElementById('callout-content').innerHTML = callouts.map(c => {
-      const car = c.car ? `${escapeHtml(car_label(c.car))}` : 'a car';
+    document.getElementById('callout-content').innerHTML = (inHtml || sentHtml) ? `
+      ${incoming.length ? `<h3 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:0.5rem 0 0.75rem">Requests on your cars</h3>${inHtml}` : ''}
+      ${sent.length ? `<h3 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:1.5rem 0 0.75rem">Your callouts</h3>${sentHtml}` : ''}
+    ` : `
+      <div style="text-align:center;padding:3rem 0;color:var(--text-muted)">
+        <p>No callouts yet. Request one on someone's car, or wait for requests on yours.</p>
+      </div>`;
+  }
+
+  function renderIncoming(callouts) {
+    return callouts.map(c => {
+      const car = c.car ? escapeHtml(car_label(c.car)) : 'a car';
       return `
         <div class="form-section" style="${c.read ? '' : 'border-color:rgba(230,48,48,0.3)'}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px">
@@ -88,10 +96,71 @@
             <div style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap">${fmtDate(c.created_at)}</div>
           </div>
           <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px">wants a callout on your <strong style="color:var(--text)">${car}</strong></div>
-          ${c.message ? `<div style="font-size:0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem 0.75rem">${escapeHtml(c.message)}</div>` : ''}
-          ${c.requester_email ? `<a class="btn" style="margin-top:10px;font-size:0.8rem" href="mailto:${encodeURIComponent(c.requester_email)}?subject=Re: callout for your ${encodeURIComponent(car_label(c.car))}">Reply by email</a>` : ''}
+          ${c.message ? `<div style="font-size:0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem 0.75rem;margin-bottom:8px">${escapeHtml(c.message)}</div>` : ''}
+          ${c.rejected
+            ? `<div style="font-size:0.85rem;color:var(--text-dim);margin-top:8px">You declined this callout.</div>`
+            : c.response
+            ? `<div style="font-size:0.85rem;color:var(--text-muted);margin-top:8px"><strong style="color:var(--text)">You replied:</strong> ${escapeHtml(c.response)}</div>`
+            : `<div class="reply-box" id="reply-${c.id}">
+                 <textarea placeholder="Reply in-app…" style="width:100%;min-height:64px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:0.88rem;padding:0.5rem 0.65rem;resize:vertical;outline:none"></textarea>
+                 <div style="display:flex;gap:8px;margin-top:8px">
+                   <button class="btn btn-primary" style="font-size:0.8rem" onclick="sendResponse('${c.id}')">Send reply</button>
+                   <button class="btn btn-danger" style="font-size:0.8rem" onclick="rejectCalloutUI('${c.id}')">Reject</button>
+                 </div>
+               </div>`}
         </div>`;
     }).join('');
+  }
+
+  function renderSent(callouts) {
+    return callouts.map(c => {
+      const car = c.car ? escapeHtml(car_label(c.car)) : 'a car';
+      return `
+        <div class="form-section" style="${c.requester_unread ? 'border-color:rgba(230,48,48,0.3)' : ''}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px">
+            <div style="font-weight:600">Your callout on ${car}
+              ${c.requester_unread ? '<span class="badge badge-red" style="margin-left:6px;font-size:0.6rem">REPLY</span>' : ''}
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-dim);white-space:nowrap">${fmtDate(c.created_at)}</div>
+          </div>
+          ${c.rejected
+            ? `<div style="font-size:0.9rem;color:#e67070">The owner declined this callout.</div>`
+            : c.response
+            ? `<div style="font-size:0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem 0.75rem"><strong style="color:var(--accent)">Owner replied:</strong> ${escapeHtml(c.response)}</div>`
+            : `<div style="font-size:0.82rem;color:var(--text-dim)">Waiting for the owner to respond…</div>`}
+        </div>`;
+    }).join('');
+  }
+
+  async function rejectCalloutUI(id) {
+    if (!confirm('Decline this callout? The requester will be notified.')) return;
+    const box = document.getElementById('reply-' + id);
+    try {
+      await rejectCallout(id);
+      if (box) box.innerHTML = `<div style="font-size:0.85rem;color:var(--text-dim)">You declined this callout.</div>`;
+      showToast('Callout declined — they’ll be notified.');
+    } catch (e) {
+      console.error(e);
+      showToast('Could not decline — try again.', 'error');
+    }
+  }
+
+  async function sendResponse(id) {
+    const box = document.getElementById('reply-' + id);
+    const ta = box.querySelector('textarea');
+    const btn = box.querySelector('button');
+    const text = ta.value.trim();
+    if (!text) { ta.focus(); return; }
+    btn.textContent = 'Sending…'; btn.disabled = true;
+    try {
+      await respondToCallout(id, text);
+      box.innerHTML = `<div style="font-size:0.85rem;color:var(--text-muted)"><strong style="color:var(--text)">You replied:</strong> ${escapeHtml(text)}</div>`;
+      showToast('Reply sent — they’ll be notified.');
+    } catch (e) {
+      console.error(e);
+      showToast('Could not send reply — try again.', 'error');
+      btn.textContent = 'Send reply'; btn.disabled = false;
+    }
   }
 
   function car_label(car) {

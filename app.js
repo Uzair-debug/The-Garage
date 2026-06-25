@@ -53,7 +53,7 @@ async function getMyCallouts() {
   if (!user) return [];
   const { data, error } = await sb()
     .from('callout_requests')
-    .select('id,car_id,requester_email,message,read,created_at,car:cars(make,model)')
+    .select('id,car_id,requester_email,message,read,response,rejected,created_at,car:cars(make,model)')
     .eq('owner_id', user.id)
     .order('created_at', { ascending: false });
   if (error) { console.error(error); return []; }
@@ -82,6 +82,59 @@ async function getUnreadCalloutCount() {
 async function markCalloutsRead(ids) {
   if (!ids || !ids.length) return;
   await sb().from('callout_requests').update({ read: true }).in('id', ids);
+}
+
+// Owner replies to a callout; flags it unread for the requester.
+async function respondToCallout(id, text) {
+  const msg = (text || '').trim();
+  if (!msg) throw new Error('Empty response');
+  const { error } = await sb().from('callout_requests').update({
+    response: msg,
+    response_at: new Date().toISOString(),
+    requester_unread: true,
+  }).eq('id', id);
+  if (error) throw error;
+}
+
+// Owner declines a callout; flags it unread for the requester.
+async function rejectCallout(id) {
+  const { error } = await sb().from('callout_requests').update({
+    rejected: true,
+    response_at: new Date().toISOString(),
+    requester_unread: true,
+  }).eq('id', id);
+  if (error) throw error;
+}
+
+// Callouts *I* sent (to see owners' responses).
+async function getMySentCallouts() {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) return [];
+  const { data, error } = await sb()
+    .from('callout_requests')
+    .select('id,car_id,response,response_at,rejected,requester_unread,created_at,car:cars(make,model)')
+    .eq('requester_id', user.id)
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+// Unread responses to my sent callouts (owner replied, I haven't looked).
+async function getResponseUnreadCount() {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) return 0;
+  const { count, error } = await sb()
+    .from('callout_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('requester_id', user.id)
+    .eq('requester_unread', true);
+  if (error) return 0;
+  return count || 0;
+}
+
+async function markResponsesRead(ids) {
+  if (!ids || !ids.length) return;
+  await sb().from('callout_requests').update({ requester_unread: false }).in('id', ids);
 }
 
 // Admin-only: list registered members (RLS restricts this to the admin).

@@ -33,14 +33,18 @@ async function setupCalloutNotifications() {
 
   // Surface existing unread on load
   if (!onCalloutsPage) {
-    const n = await getUnreadCalloutCount();
-    if (n > 0) showCalloutPopup(`${n} new callout${n > 1 ? 's' : ''}`, 'Tap to view your requests');
+    const [incoming, responses] = await Promise.all([
+      getUnreadCalloutCount(), getResponseUnreadCount(),
+    ]);
+    if (incoming > 0) showCalloutPopup(`${incoming} new callout${incoming > 1 ? 's' : ''}`, 'Tap to view your requests');
+    if (responses > 0) showCalloutPopup(`${responses} new repl${responses > 1 ? 'ies' : 'y'}`, 'An owner replied to your callout');
   }
 
   // Live updates while the page is open
   if (_calloutChannel) return;
   _calloutChannel = sb()
     .channel('callouts-' + _currentUser.id)
+    // New requests on cars I own
     .on('postgres_changes', {
       event: 'INSERT', schema: 'public', table: 'callout_requests',
       filter: 'owner_id=eq.' + _currentUser.id,
@@ -48,6 +52,21 @@ async function setupCalloutNotifications() {
       const who = payload.new?.requester_email || 'Someone';
       showCalloutPopup('New callout request', who + ' wants a callout');
       updateCalloutBadge();
+    })
+    // Owner replied to a callout I sent
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'callout_requests',
+      filter: 'requester_id=eq.' + _currentUser.id,
+    }, payload => {
+      const repliedNow = payload.new?.response && payload.new.response !== payload.old?.response;
+      const rejectedNow = payload.new?.rejected && !payload.old?.rejected;
+      if (repliedNow) {
+        showCalloutPopup('Callout reply', 'The owner responded to your callout');
+        updateCalloutBadge();
+      } else if (rejectedNow) {
+        showCalloutPopup('Callout declined', 'The owner declined your callout');
+        updateCalloutBadge();
+      }
     })
     .subscribe();
 }
@@ -90,11 +109,13 @@ function renderNavAuth(user) {
         <div class="user-menu-panel" id="user-menu-panel">
           <div class="user-menu-email">${escapeHtml(user.email)}</div>
           <a class="user-menu-item" href="callouts.html">Callouts <span class="menu-count" id="callout-badge"></span></a>
+          <button class="user-menu-item" id="push-toggle" onclick="handlePushToggle()">Enable notifications</button>
           ${adminItem}
           <button class="user-menu-item danger" onclick="signOut()">Sign out</button>
         </div>
       </div>`;
     updateCalloutBadge();
+    refreshPushToggle();
   } else {
     el.innerHTML = `
       <button class="btn" onclick="showAuthModal()" style="font-size:0.78rem;padding:0.35rem 0.8rem">Sign in</button>`;
@@ -120,11 +141,31 @@ function closeUserMenu() {
 }
 function _userMenuEsc(e) { if (e.key === 'Escape') closeUserMenu(); }
 
+// Reflect push state in the dropdown toggle
+async function refreshPushToggle() {
+  const btn = document.getElementById('push-toggle');
+  if (!btn || typeof isPushEnabled !== 'function') return;
+  if (!pushSupported()) { btn.textContent = 'Notifications unsupported'; btn.disabled = true; return; }
+  btn.textContent = (await isPushEnabled()) ? 'Notifications on ✓' : 'Enable notifications';
+}
+
+async function handlePushToggle() {
+  if (typeof enablePush !== 'function') return;
+  const ok = await enablePush();
+  if (ok) refreshPushToggle();
+}
+
 // Unread callout indicator on the avatar + dropdown
 async function updateCalloutBadge() {
   if (!_currentUser) return;
   let n = 0;
-  try { n = await getUnreadCalloutCount(); } catch (e) {}
+  try {
+    const [incoming, responses] = await Promise.all([
+      getUnreadCalloutCount(),
+      getResponseUnreadCount(),
+    ]);
+    n = incoming + responses;
+  } catch (e) {}
   const dot = document.getElementById('avatar-dot');
   const badge = document.getElementById('callout-badge');
   if (dot) dot.style.display = n > 0 ? 'block' : 'none';
