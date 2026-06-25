@@ -41,13 +41,15 @@ function renderNavAuth(user) {
       : '';
     el.innerHTML = `
       <div class="user-menu">
-        <button class="user-avatar" onclick="toggleUserMenu(event)" title="${escapeHtml(user.email)}" aria-label="Account menu">${escapeHtml(initial)}</button>
+        <button class="user-avatar" onclick="toggleUserMenu(event)" title="${escapeHtml(user.email)}" aria-label="Account menu">${escapeHtml(initial)}<span class="avatar-dot" id="avatar-dot"></span></button>
         <div class="user-menu-panel" id="user-menu-panel">
           <div class="user-menu-email">${escapeHtml(user.email)}</div>
+          <a class="user-menu-item" href="callouts.html">Callouts <span class="menu-count" id="callout-badge"></span></a>
           ${adminItem}
           <button class="user-menu-item danger" onclick="signOut()">Sign out</button>
         </div>
       </div>`;
+    updateCalloutBadge();
   } else {
     el.innerHTML = `
       <button class="btn" onclick="showAuthModal()" style="font-size:0.78rem;padding:0.35rem 0.8rem">Sign in</button>`;
@@ -72,6 +74,17 @@ function closeUserMenu() {
   document.removeEventListener('keydown', _userMenuEsc);
 }
 function _userMenuEsc(e) { if (e.key === 'Escape') closeUserMenu(); }
+
+// Unread callout indicator on the avatar + dropdown
+async function updateCalloutBadge() {
+  if (!_currentUser) return;
+  let n = 0;
+  try { n = await getUnreadCalloutCount(); } catch (e) {}
+  const dot = document.getElementById('avatar-dot');
+  const badge = document.getElementById('callout-badge');
+  if (dot) dot.style.display = n > 0 ? 'block' : 'none';
+  if (badge) badge.textContent = n > 0 ? n : '';
+}
 
 // ─── Sign out ────────────────────────────────────────────────────
 async function signOut() {

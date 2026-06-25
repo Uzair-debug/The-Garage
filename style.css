@@ -1005,6 +1005,30 @@ input, textarea { caret-color: var(--accent); }
   transition: border-color 0.15s, background 0.15s;
 }
 .user-avatar:hover { border-color: rgba(230,48,48,0.4); background: rgba(230,48,48,0.2); }
+.user-avatar { position: relative; }
+.avatar-dot {
+  display: none;
+  position: absolute;
+  top: -2px; right: -2px;
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+}
+.user-menu-item { display: flex; align-items: center; justify-content: space-between; }
+.menu-count:not(:empty) {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 18px; height: 18px;
+  padding: 0 5px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
 
 .user-menu-panel {
   position: absolute;

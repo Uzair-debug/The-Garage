@@ -150,6 +150,9 @@
         </div>
         <div class="car-detail-actions">
           ${likeHtml}
+          ${!isOwner ? `<button class="btn btn-primary" onclick="openCallout('${car.id}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 8a3 3 0 0 1 0 6"/><path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"/><path d="M12 8h0l4.524 -3.77a0.9 .9 0 0 1 1.476 .692v12.156a0.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h8"/></svg>
+            Request Callout</button>` : ''}
           ${isOwner ? `<a href="add.html?id=${car.id}" class="btn">Edit</a>` : ''}
           ${isOwner ? `<button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>` : ''}
         </div>
@@ -256,6 +259,55 @@
       btn.classList.add('liked');
       btn.querySelector('svg').setAttribute('fill', 'currentColor');
       btn.innerHTML = btn.innerHTML.replace('0 reps', `${newCount} rep${newCount === 1 ? '' : 's'}`);
+    }
+  }
+
+  // ─── Request Callout ───────────────────────────────────────────
+  function openCallout(carId) {
+    requireAuth(() => showCalloutModal(carId), () => {});
+  }
+
+  function showCalloutModal(carId) {
+    if (document.getElementById('callout-overlay')) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'callout-overlay';
+    overlay.className = 'auth-overlay';
+    overlay.innerHTML = `
+      <div class="auth-modal">
+        <button class="auth-close" onclick="closeCallout()" title="Close">&times;</button>
+        <h2 class="auth-title">Request a callout</h2>
+        <p class="auth-sub">The owner gets notified. Add a note if you like.</p>
+        <div class="auth-form">
+          <div class="field">
+            <label>Message (optional)</label>
+            <textarea id="callout-msg" placeholder="e.g. Keen to link up for a shoot this weekend" maxlength="500" style="width:100%;min-height:90px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:0.9rem;padding:0.6rem 0.75rem;resize:vertical;outline:none"></textarea>
+          </div>
+          <p class="auth-error" id="callout-error"></p>
+          <button class="btn btn-primary" id="callout-send" onclick="sendCallout('${carId}')" style="width:100%;justify-content:center">Send request</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeCallout(); });
+    document.getElementById('callout-msg').focus();
+  }
+
+  function closeCallout() {
+    const el = document.getElementById('callout-overlay');
+    if (el) el.remove();
+  }
+
+  async function sendCallout(carId) {
+    const btn = document.getElementById('callout-send');
+    const err = document.getElementById('callout-error');
+    btn.textContent = 'Sending…'; btn.disabled = true; err.textContent = '';
+    try {
+      await createCallout(carId, document.getElementById('callout-msg').value);
+      closeCallout();
+      showToast('Callout sent to the owner!');
+    } catch (e) {
+      console.error(e);
+      err.textContent = e?.message || 'Could not send — try again.';
+      btn.textContent = 'Send request'; btn.disabled = false;
     }
   }
 

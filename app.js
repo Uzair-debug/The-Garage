@@ -32,6 +32,44 @@ async function deleteCar(id) {
   if (error) throw error;
 }
 
+// ─── Callout requests ─────────────────────────────────────────────
+// Requester sends a callout for a car; owner_id + requester_email are
+// filled server-side by a trigger, so we only pass car_id + message.
+async function createCallout(carId, message) {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) throw new Error('Not signed in');
+  const { error } = await sb().from('callout_requests').insert({
+    car_id: carId,
+    requester_id: user.id,
+    message: (message || '').trim() || null,
+  });
+  if (error) throw error;
+}
+
+// Requests for cars I own (RLS limits rows to the owner / admin).
+async function getMyCallouts() {
+  const { data, error } = await sb()
+    .from('callout_requests')
+    .select('id,car_id,requester_email,message,read,created_at,car:cars(make,model)')
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+async function getUnreadCalloutCount() {
+  const { count, error } = await sb()
+    .from('callout_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('read', false);
+  if (error) return 0;
+  return count || 0;
+}
+
+async function markCalloutsRead(ids) {
+  if (!ids || !ids.length) return;
+  await sb().from('callout_requests').update({ read: true }).in('id', ids);
+}
+
 // Admin-only: list registered members (RLS restricts this to the admin).
 async function getProfiles() {
   const { data, error } = await sb()
