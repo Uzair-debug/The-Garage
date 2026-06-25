@@ -1067,6 +1067,52 @@ input, textarea { caret-color: var(--accent); }
 }
 .gallery-main img { cursor: zoom-in; }
 
+/* Remove blue tap-highlight flash on touch devices */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* ── Large desktops: roomier canvas, more columns ── */
+@media (min-width: 1400px) {
+  main { max-width: 1320px; }
+  .car-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+}
+
+/* ── Tablet ── */
+@media (max-width: 900px) {
+  .hero-bio { padding: 2.5rem 0 2rem; }
+  .hero-bio-inner { align-items: stretch; }
+  .hero-bio-stats { flex-direction: row; width: 100%; }
+  .hero-bio-stats .stat-pill { flex: 1; min-width: 0; }
+}
+
+/* ── Phones ── */
+@media (max-width: 600px) {
+  .car-grid { grid-template-columns: 1fr; gap: 0.85rem; }
+  .car-card-img, .car-card-img-placeholder { height: 200px; }
+
+  /* Toolbar: search full width, controls share a row */
+  .garage-toolbar { gap: 8px; }
+  .search-wrap { flex-basis: 100%; }
+  .toolbar-right { width: 100%; }
+  .toolbar-right select { flex: 1; }
+
+  /* Full-width primary actions are easier to thumb */
+  .form-actions { flex-direction: column-reverse; }
+  .form-actions .btn { width: 100%; justify-content: center; }
+  .car-detail-actions { flex-wrap: wrap; }
+  .car-detail-actions .btn,
+  .car-detail-actions .like-btn-lg { flex: 1; justify-content: center; }
+
+  /* Toast spans the width so it never clips */
+  .toast { left: 1rem; right: 1rem; bottom: 1rem; text-align: center; }
+
+  /* Lightbox controls sized for thumbs, clear of the image */
+  .lightbox-nav { width: 40px; height: 40px; font-size: 1.2rem; }
+  .lightbox-nav.prev { left: 0.5rem; }
+  .lightbox-nav.next { right: 0.5rem; }
+  .lightbox-close { top: 0.5rem; right: 0.75rem; }
+  .lightbox img { max-width: 96vw; }
+}
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
