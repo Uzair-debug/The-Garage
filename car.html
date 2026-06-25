@@ -264,7 +264,13 @@
 
   // ─── Request Callout ───────────────────────────────────────────
   function openCallout(carId) {
-    requireAuth(() => showCalloutModal(carId), () => {});
+    requireAuth(async (user) => {
+      if (!(await userHasCar(user.id))) {
+        showToast('Add your own car to the garage first to request a callout.', 'error');
+        return;
+      }
+      showCalloutModal(carId);
+    }, () => {});
   }
 
   function showCalloutModal(carId) {

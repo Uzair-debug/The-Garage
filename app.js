@@ -56,6 +56,13 @@ async function getMyCallouts() {
   return data || [];
 }
 
+// Does this user own at least one car? (gate for requesting callouts)
+async function userHasCar(userId) {
+  const { data, error } = await sb().from('cars').select('id').eq('user_id', userId).limit(1);
+  if (error) { console.error(error); return false; }
+  return (data || []).length > 0;
+}
+
 async function getUnreadCalloutCount() {
   const { count, error } = await sb()
     .from('callout_requests')
