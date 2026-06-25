@@ -46,11 +46,15 @@ async function createCallout(carId, message) {
   if (error) throw error;
 }
 
-// Requests for cars I own (RLS limits rows to the owner / admin).
+// Requests for cars I own. Filter by owner_id explicitly so the admin
+// read-override doesn't surface other people's callouts on my own page.
 async function getMyCallouts() {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) return [];
   const { data, error } = await sb()
     .from('callout_requests')
     .select('id,car_id,requester_email,message,read,created_at,car:cars(make,model)')
+    .eq('owner_id', user.id)
     .order('created_at', { ascending: false });
   if (error) { console.error(error); return []; }
   return data || [];
@@ -64,9 +68,12 @@ async function userHasCar(userId) {
 }
 
 async function getUnreadCalloutCount() {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) return 0;
   const { count, error } = await sb()
     .from('callout_requests')
     .select('id', { count: 'exact', head: true })
+    .eq('owner_id', user.id)
     .eq('read', false);
   if (error) return 0;
   return count || 0;

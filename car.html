@@ -53,12 +53,14 @@
       return;
     }
 
-    const isOwner = !!currentUser && (car.user_id === currentUser.id || isAdmin(currentUser));
+    // canManage = owner OR admin (edit/delete). isActualOwner = the real owner only.
+    const canManage = !!currentUser && (car.user_id === currentUser.id || isAdmin(currentUser));
+    const isActualOwner = !!currentUser && car.user_id === currentUser.id;
     document.title = `${car.year ? car.year + ' ' : ''}${car.make} ${car.model} – The Garage`;
-    render(car, isOwner);
+    render(car, canManage, isActualOwner);
   }
 
-  function render(car, isOwner) {
+  function render(car, canManage, isActualOwner) {
     const title = escapeHtml([car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car');
     const meta = escapeHtml([car.year, car.drivetrain, car.colour].filter(Boolean).join(' · '));
 
@@ -150,11 +152,11 @@
         </div>
         <div class="car-detail-actions">
           ${likeHtml}
-          ${!isOwner ? `<button class="btn btn-primary" onclick="openCallout('${car.id}')">
+          ${!isActualOwner ? `<button class="btn btn-primary" onclick="openCallout('${car.id}')">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 8a3 3 0 0 1 0 6"/><path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"/><path d="M12 8h0l4.524 -3.77a0.9 .9 0 0 1 1.476 .692v12.156a0.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h8"/></svg>
             Request Callout</button>` : ''}
-          ${isOwner ? `<a href="add.html?id=${car.id}" class="btn">Edit</a>` : ''}
-          ${isOwner ? `<button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>` : ''}
+          ${canManage ? `<a href="add.html?id=${car.id}" class="btn">Edit</a>` : ''}
+          ${canManage ? `<button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>` : ''}
         </div>
       </div>
 
