@@ -307,7 +307,8 @@ main {
 }
 .car-card:hover {
   border-color: rgba(255,255,255,0.18);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -12px rgba(0,0,0,0.6);
 }
 
 .car-card-img {
@@ -316,7 +317,9 @@ main {
   object-fit: cover;
   display: block;
   background: var(--surface2);
+  transition: transform 0.35s ease;
 }
+.car-card:hover .car-card-img { transform: scale(1.045); }
 
 .car-card-img-placeholder {
   width: 100%;
@@ -668,9 +671,8 @@ main {
   display: block;
   object-fit: contain;
 }
-.gallery-main .no-photo { min-height: 320px; }
 .gallery-main .no-photo {
-  width: 100%; height: 100%;
+  width: 100%; min-height: 320px;
   display: flex; align-items: center; justify-content: center;
   flex-direction: column; gap: 0.5rem;
   color: var(--text-dim);
@@ -924,4 +926,77 @@ main {
   .field-row { grid-template-columns: 1fr; }
   nav { padding: 0.75rem 1rem; }
   main, .form-page, .car-detail { padding: 1.25rem 1rem; }
+  .car-detail-header { flex-direction: column; }
+  .car-detail-actions { width: 100%; }
+}
+
+/* ─── POLISH ───────────────────────────────────────────────────── */
+
+html { scroll-behavior: smooth; }
+
+/* Sticky-nav offset so #garage isn't hidden under the bar */
+#garage { scroll-margin-top: 80px; }
+
+/* Text selection + accent caret */
+::selection { background: rgba(230,48,48,0.3); color: #fff; }
+input, textarea { caret-color: var(--accent); }
+
+/* Refined global scrollbar */
+* { scrollbar-width: thin; scrollbar-color: var(--surface2) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--surface2);
+  border-radius: 100px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: #2c2c34; }
+
+/* Keyboard-accessible focus rings (mouse clicks stay clean) */
+.btn:focus-visible,
+.car-card:focus-visible,
+.like-btn:focus-visible,
+.gallery-thumb:focus-visible,
+.nav-logo a:focus-visible,
+.auth-toggle button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Tactile button press */
+.btn:active { transform: translateY(1px); }
+
+/* Logo hover */
+.nav-logo a { transition: opacity 0.15s; }
+.nav-logo a:hover { opacity: 0.85; }
+
+/* Stat pills lift slightly */
+.stat-pill { transition: border-color 0.15s, transform 0.15s; }
+.stat-pill:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-2px); }
+
+/* Like-button heartbeat when newly liked */
+.like-btn.liked svg { animation: like-pop 0.3s ease; }
+@keyframes like-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* Gentle entrance for the car grid */
+.car-grid { animation: fade-rise 0.35s ease both; }
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .car-card:hover { transform: none; }
+  .car-card:hover .car-card-img { transform: none; }
 }

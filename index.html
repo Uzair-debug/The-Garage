@@ -148,8 +148,10 @@
           <span>${car.likes || 0}</span>
         </button>`;
 
+      const go = `location.href='car.html?id=${car.id}'`;
       return `
-        <div class="car-card" onclick="location.href='car.html?id=${car.id}'">
+        <div class="car-card" role="button" tabindex="0" onclick="${go}"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${go}}">
           ${img}
           <div class="car-card-body">
             <div class="car-card-header">
