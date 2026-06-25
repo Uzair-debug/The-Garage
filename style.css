@@ -811,6 +811,42 @@ main {
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* CALLOUT POPUP NOTIFICATION */
+.callout-popup {
+  position: fixed;
+  top: 1rem; right: 1rem;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid rgba(230,48,48,0.35);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem 0.85rem 0.9rem;
+  box-shadow: 0 14px 36px -12px rgba(0,0,0,0.7);
+  cursor: pointer;
+  max-width: 320px;
+  opacity: 0;
+  transform: translateX(120%);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
+}
+.callout-popup.show { opacity: 1; transform: translateX(0); }
+.callout-popup:hover { border-color: var(--accent); }
+.callout-popup-icon {
+  flex-shrink: 0;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.callout-popup-title { font-size: 0.9rem; font-weight: 600; }
+.callout-popup-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 1px; }
+
+@media (max-width: 600px) {
+  .callout-popup { left: 1rem; right: 1rem; max-width: none; }
+}
+
 /* AUTH MODAL */
 .auth-overlay {
   position: fixed;

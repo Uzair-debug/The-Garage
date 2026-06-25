@@ -17,11 +17,56 @@ async function getCurrentUser() {
 async function initAuth() {
   const user = await getCurrentUser();
   renderNavAuth(user);
+  if (user) setupCalloutNotifications();
 
   sb().auth.onAuthStateChange((_event, session) => {
     _currentUser = session?.user || null;
     renderNavAuth(_currentUser);
   });
+}
+
+// Pop-up notifications for callouts on my cars (on-load + live realtime)
+let _calloutChannel = null;
+async function setupCalloutNotifications() {
+  if (!_currentUser) return;
+  const onCalloutsPage = location.pathname.endsWith('callouts.html');
+
+  // Surface existing unread on load
+  if (!onCalloutsPage) {
+    const n = await getUnreadCalloutCount();
+    if (n > 0) showCalloutPopup(`${n} new callout${n > 1 ? 's' : ''}`, 'Tap to view your requests');
+  }
+
+  // Live updates while the page is open
+  if (_calloutChannel) return;
+  _calloutChannel = sb()
+    .channel('callouts-' + _currentUser.id)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'callout_requests',
+      filter: 'owner_id=eq.' + _currentUser.id,
+    }, payload => {
+      const who = payload.new?.requester_email || 'Someone';
+      showCalloutPopup('New callout request', who + ' wants a callout');
+      updateCalloutBadge();
+    })
+    .subscribe();
+}
+
+function showCalloutPopup(title, sub) {
+  const el = document.createElement('div');
+  el.className = 'callout-popup';
+  el.innerHTML = `
+    <div class="callout-popup-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 5v16"/><path d="M5 5h11l-2 4l2 4h-11"/></svg>
+    </div>
+    <div class="callout-popup-text">
+      <div class="callout-popup-title">${escapeHtml(title)}</div>
+      <div class="callout-popup-sub">${escapeHtml(sub || '')}</div>
+    </div>`;
+  el.onclick = () => { location.href = 'callouts.html'; };
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 6500);
 }
 
 function renderNavAuth(user) {
