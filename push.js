@@ -1,6 +1,6 @@
 // Web push opt-in. Registers the service worker, subscribes the device,
 // and stores the subscription so the Edge Function can push to it.
-const VAPID_PUBLIC_KEY = 'BM41g8jAmXYDR0vAzDhvRhdjWT-zVNPhUukeBFbctgX4YO1fkKhK3TrE7M4CjyjO1JDQ85VP7zBjrpnMixy2YQ';
+const VAPID_PUBLIC_KEY = 'BL1JLigduV2bHj0b8r_I6WMSsKuyTWui_hBjWYH4bPI4uQGUAGmK5bzR8cSkARRUcndDsnzOV3kqc5UZECXPl9U';
 
 function pushSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -67,7 +67,7 @@ async function enablePush() {
     return true;
   } catch (e) {
     console.error(e);
-    showToast('Could not enable notifications — try again.', 'error');
+    showToast('Notifications failed: ' + (e?.message || e?.error_description || 'unknown error'), 'error');
     return false;
   }
 }
