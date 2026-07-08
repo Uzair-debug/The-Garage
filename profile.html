@@ -99,6 +99,8 @@
         <div class="car-grid" id="car-grid">
           ${cars.map(car => renderCarCard(car, { showOwner: false })).join('')}
         </div>`}`;
+
+    initCardExtras(document.getElementById('profile-root'));
   }
 
   init();

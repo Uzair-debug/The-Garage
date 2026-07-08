@@ -1430,17 +1430,117 @@ footer p {
   color: var(--text-dim);
 }
 
-/* ─── STAGGERED CARD ENTRANCE ──────────────────────────────────── */
-.car-grid > .car-card { animation: fade-rise 0.4s ease both; }
-.car-grid > .car-card:nth-child(1)  { animation-delay: 0.02s; }
-.car-grid > .car-card:nth-child(2)  { animation-delay: 0.06s; }
-.car-grid > .car-card:nth-child(3)  { animation-delay: 0.10s; }
-.car-grid > .car-card:nth-child(4)  { animation-delay: 0.14s; }
-.car-grid > .car-card:nth-child(5)  { animation-delay: 0.18s; }
-.car-grid > .car-card:nth-child(6)  { animation-delay: 0.22s; }
-.car-grid > .car-card:nth-child(7)  { animation-delay: 0.26s; }
-.car-grid > .car-card:nth-child(8)  { animation-delay: 0.30s; }
-.car-grid > .car-card:nth-child(n+9) { animation-delay: 0.34s; }
+/* ─── SCROLL-REVEAL CARD ENTRANCE (wired in app.js) ────────────── */
+.car-grid > .car-card { opacity: 0; }
+.car-grid > .car-card.in { opacity: 1; animation: fade-rise 0.45s ease backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .car-grid > .car-card { opacity: 1; }
+}
+
+/* Carousel dots on card photos */
+.car-dots {
+  position: absolute;
+  bottom: 8px; left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  z-index: 2;
+  pointer-events: none;
+}
+.car-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  transition: background 0.2s, transform 0.2s;
+}
+.car-dot.active { background: #fff; transform: scale(1.25); }
+
+/* ─── CAR PAGE HERO ────────────────────────────────────────────── */
+.car-hero {
+  --tint: rgba(230,48,48,0.18);
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  margin-bottom: 10px;
+  cursor: zoom-in;
+  animation: fade-rise 0.4s ease both;
+}
+.car-hero img {
+  width: 100%;
+  height: clamp(300px, 48vh, 480px);
+  object-fit: cover;
+  display: block;
+}
+.car-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(13,13,15,0.15) 0%, rgba(13,13,15,0) 30%, rgba(13,13,15,0.88) 96%),
+    linear-gradient(0deg, var(--tint), transparent 50%);
+  pointer-events: none;
+}
+.car-hero-content {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 2;
+  padding: 1.4rem 1.5rem;
+  pointer-events: none;
+}
+.car-hero-content a, .car-hero-content .hero-chip { pointer-events: auto; }
+.car-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  line-height: 1.08;
+  margin: 0.45rem 0 0.65rem;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.7);
+}
+.hero-chips {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.88);
+  background: rgba(13,13,15,0.55);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 100px;
+  padding: 4px 11px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-decoration: none;
+}
+.hero-chip svg { opacity: 0.75; flex-shrink: 0; }
+a.hero-chip:hover { border-color: var(--page-accent, var(--accent)); color: #fff; }
+
+/* Status-accented detail cards */
+.car-detail .detail-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.car-detail .detail-card h3::before {
+  content: '';
+  width: 14px; height: 3px;
+  border-radius: 2px;
+  background: var(--page-accent, var(--accent));
+}
+.mods-group-icon { display: inline-flex; }
+
+@media (max-width: 600px) {
+  .car-hero img { height: 260px; }
+  .car-hero-content { padding: 1rem; }
+}
 
 /* ─── SHARED UTILITY CLASSES (replaces repeated inline styles) ─── */
 .text-area {

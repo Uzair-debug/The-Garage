@@ -66,14 +66,29 @@
     const title = escapeHtml([car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car');
     const meta = escapeHtml([car.year, car.drivetrain, car.colour].filter(Boolean).join(' · '));
 
-    // Status badge
+    // Status accent theming for the whole page
     const statusMeta = STATUS_META[car.status];
+    const accent = statusMeta ? statusMeta.color : '#e63030';
+    const detailRoot = document.getElementById('car-detail');
+    detailRoot.style.setProperty('--page-accent', accent);
+
     const statusBadge = statusMeta
       ? `<span class="status-badge" style="background:${statusMeta.bg};color:${statusMeta.color};border:1px solid ${statusMeta.color}44">${escapeHtml(car.status)}</span>`
       : '';
 
-    // Gallery
+    // Spec chips shown on the hero
+    const chip = (text, icon) => `<span class="hero-chip">${icon || ''}${escapeHtml(text)}</span>`;
+    const chips = [
+      car.year ? chip(car.year) : '',
+      car.engine ? chip(car.engine) : '',
+      car.power ? chip(car.power, catIcon('Engine', 13)) : '',
+      car.drivetrain ? chip(car.drivetrain, catIcon('Wheels', 13)) : '',
+      car.colour ? chip(car.colour, catIcon('Colour', 13)) : '',
+    ].join('');
+
+    // Hero / gallery
     let galleryHtml = '';
+    let headerHtml = '';
     if (car.photos && car.photos.length) {
       const thumbs = car.photos.map((src, i) => `
         <div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="setPhoto(${i})">
@@ -81,12 +96,25 @@
         </div>`).join('');
       galleryHtml = `
         <div class="photo-gallery">
-          <div class="gallery-main">
-            <img id="gallery-main-img" src="${encodeURI(car.photos[0])}" alt="${title}" onclick="openLightbox()">
+          <div class="car-hero" style="--tint:${accent}2e" onclick="openLightbox()">
+            <img id="gallery-main-img" src="${encodeURI(car.photos[0])}" alt="${title}">
+            <div class="car-hero-content">
+              ${statusBadge}
+              <h1 class="car-hero-title">${title}</h1>
+              <div class="hero-chips">${chips}</div>
+            </div>
           </div>
           ${car.photos.length > 1 ? `<div class="gallery-thumbs">${thumbs}</div>` : ''}
         </div>`;
     } else {
+      headerHtml = `
+        <div class="car-detail-title" style="margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+            <h1 style="margin:0">${title}</h1>
+            ${statusBadge}
+          </div>
+          ${meta ? `<p class="year-make">${meta}</p>` : ''}
+        </div>`;
       galleryHtml = `
         <div class="photo-gallery">
           <div class="gallery-main">
@@ -125,7 +153,7 @@
         return `
           <div class="mods-group">
             <div class="mods-group-header">
-              <span class="mods-group-dot" style="background:${color}"></span>${escapeHtml(cat)}
+              <span class="mods-group-icon" style="color:${color}">${catIcon(cat, 15)}</span>${escapeHtml(cat)}
             </div>
             ${names.map(n => `
               <div class="mod-detail-item">
@@ -152,15 +180,11 @@
         </a>` : '';
 
     document.getElementById('car-detail').innerHTML = `
-      <div class="car-detail-header">
-        <div class="car-detail-title">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
-            <h1 style="margin:0">${title}</h1>
-            ${statusBadge}
-          </div>
-          ${meta ? `<p class="year-make">${meta}</p>` : ''}
-          ${igHtml}
-        </div>
+      ${headerHtml}
+      ${galleryHtml}
+
+      <div class="car-detail-header" style="margin:0.75rem 0 1.5rem">
+        <div class="car-detail-title">${igHtml}</div>
         <div class="car-detail-actions">
           ${likeHtml}
           ${!isActualOwner ? `<button class="btn btn-primary" onclick="openCallout('${car.id}')">
@@ -170,8 +194,6 @@
           ${canManage ? `<button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>` : ''}
         </div>
       </div>
-
-      ${galleryHtml}
 
       <div class="detail-sections">
         <div class="detail-card">

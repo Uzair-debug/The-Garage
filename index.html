@@ -215,6 +215,7 @@
     }
 
     grid.innerHTML = cars.map(car => renderCarCard(car)).join('');
+    initCardExtras(grid);
   }
 
   init();

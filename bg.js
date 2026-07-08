@@ -64,10 +64,13 @@
     c.globalAlpha = 1;
   }
 
+  let gauge = null;
+
   function drawSpeedometer(c) {
     const cx = W * 0.82;
     const cy = H * 0.28;
     const r = Math.min(W, H) * 0.22;
+    gauge = { cx, cy, r };
 
     c.save();
     c.strokeStyle = 'rgba(230,48,48,0.06)';
@@ -132,11 +135,40 @@
     speedLines.push({ y, height, x: -W * 0.3, alpha: 0.18 });
   }
 
+  // ─── Gauge needle (idles, then "revs" to a new position) ────────
+  const needle = { t: 0.08, target: 0.55, next: 0 };
+
+  function drawNeedle(ts) {
+    if (!gauge) return;
+    if (ts > needle.next) {
+      needle.target = 0.1 + Math.random() * 0.78;
+      needle.next = ts + 3500 + Math.random() * 5000;
+    }
+    needle.t += (needle.target - needle.t) * 0.025;
+    const a0 = Math.PI * 0.75, a1 = Math.PI * 1.9;
+    const ang = a0 + (a1 - a0) * (needle.t + Math.sin(ts / 260) * 0.004);
+    const { cx, cy, r } = gauge;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(230,48,48,0.20)';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - Math.cos(ang) * r * 0.08, cy - Math.sin(ang) * r * 0.08);
+    ctx.lineTo(cx + Math.cos(ang) * r * 0.56, cy + Math.sin(ang) * r * 0.56);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(230,48,48,0.28)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   // ─── Main loop ───────────────────────────────────────────────────
   function animate(ts) {
     requestAnimationFrame(animate);
     ctx.clearRect(0, 0, W, H);
     if (staticCanvas) ctx.drawImage(staticCanvas, 0, 0);
+    drawNeedle(ts);
 
     sparks.forEach((s, i) => {
       s.x += s.vx;

@@ -268,6 +268,25 @@ const CAT_COLORS = {
 
 function normalizeMod(m) { return typeof m === 'string' ? { cat: 'Other', name: m } : m; }
 
+// Small decorative icons per mod category / spec
+const CAT_ICONS = {
+  Engine: '<path d="M13 3l-6 9h4l-2 9 8-11h-5z"/>',
+  Exhaust: '<path d="M4 8h8a2 2 0 1 0 -2 -3"/><path d="M3 12h12a2 2 0 1 1 -2 3"/><path d="M4 16h6a2 2 0 1 1 -2 3"/>',
+  Suspension: '<path d="M8 4l8 2.5l-8 3l8 3l-8 3l8 2.5"/>',
+  Exterior: '<path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/>',
+  Wheels: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 4.5v5"/><path d="M12 14.5v5"/><path d="M4.5 12h5"/><path d="M14.5 12h5"/>',
+  Interior: '<path d="M5 11a2 2 0 0 1 2 2v1h10v-1a2 2 0 1 1 4 0v4a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-4a2 2 0 0 1 2 -2z"/><path d="M6 11v-5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v5"/>',
+  Brakes: '<circle cx="12" cy="12" r="5"/><path d="M12 3a9 9 0 0 1 9 9"/><path d="M3 12a9 9 0 0 1 9 -9"/>',
+  Audio: '<path d="M11 5l-4 4h-3v6h3l4 4z"/><path d="M16 9a4 4 0 0 1 0 6"/>',
+  Colour: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1 -12 0c0 -4.5 6 -11 6 -11z"/>',
+  Other: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+};
+
+function catIcon(cat, size = 14) {
+  const path = CAT_ICONS[cat] || CAT_ICONS.Other;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+}
+
 function fmtDate(iso, withYear = false) {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -305,13 +324,22 @@ function renderCarCard(car, { showOwner = true } = {}) {
         : car.owner ? escapeHtml(car.owner) : '&nbsp;'}</div>`
     : '';
 
+  const multiPhoto = car.photos && car.photos.length > 1;
+  const photosAttr = multiPhoto
+    ? ` data-photos="${encodeURIComponent(JSON.stringify(car.photos.map(p => encodeURI(p))))}"`
+    : '';
+  const dotsHtml = multiPhoto
+    ? `<div class="car-dots">${car.photos.map((_, i) => `<span class="car-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>`
+    : '';
+
   const go = `location.href='car.html?id=${car.id}'`;
   return `
     <div class="car-card" role="button" tabindex="0" onclick="${go}"
          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${go}}">
-      <div class="car-card-media">
+      <div class="car-card-media"${photosAttr}>
         ${img}
         ${statusChip}
+        ${dotsHtml}
         <span class="car-card-arrow" aria-hidden="true">→</span>
       </div>
       <div class="car-card-body">
@@ -325,6 +353,82 @@ function renderCarCard(car, { showOwner = true } = {}) {
         <div class="car-card-badges">${engine}${power}${modCount}</div>
       </div>
     </div>`;
+}
+
+// ─── Card extras: scroll reveal, photo carousel, hover tilt ───────
+// Call after rendering a .car-grid (index + profile do this).
+function initCardExtras(root) {
+  const scope = root || document;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cards = [...scope.querySelectorAll('.car-card:not(.in)')];
+
+  // Reveal cards as they scroll into view (staggered)
+  if (!('IntersectionObserver' in window) || reduce) {
+    cards.forEach(c => c.classList.add('in'));
+  } else {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { rootMargin: '0px 0px -30px' });
+    cards.forEach((c, i) => {
+      c.style.animationDelay = `${Math.min((i % 8) * 45, 320)}ms`;
+      io.observe(c);
+    });
+  }
+
+  cards.forEach(card => {
+    // Photo carousel (hover on desktop, swipe on touch)
+    const media = card.querySelector('.car-card-media[data-photos]');
+    if (media) {
+      let photos = [];
+      try { photos = JSON.parse(decodeURIComponent(media.dataset.photos)); } catch (e) {}
+      const img = media.querySelector('.car-card-img');
+      const dots = media.querySelectorAll('.car-dot');
+      if (img && photos.length > 1) {
+        let idx = 0, timer = null, swiped = false;
+        const show = i => {
+          idx = (i + photos.length) % photos.length;
+          img.src = photos[idx];
+          dots.forEach((d, j) => d.classList.toggle('active', j === idx));
+        };
+        card.addEventListener('mouseenter', () => {
+          if (reduce || timer) return;
+          timer = setInterval(() => show(idx + 1), 1100);
+        });
+        card.addEventListener('mouseleave', () => {
+          clearInterval(timer); timer = null; show(0);
+        });
+        let sx = 0, sy = 0;
+        media.addEventListener('touchstart', e => {
+          sx = e.touches[0].clientX; sy = e.touches[0].clientY; swiped = false;
+        }, { passive: true });
+        media.addEventListener('touchend', e => {
+          const dx = e.changedTouches[0].clientX - sx;
+          const dy = e.changedTouches[0].clientY - sy;
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            show(idx + (dx < 0 ? 1 : -1));
+            swiped = true;
+            e.preventDefault(); // keep the swipe from counting as a card tap
+          }
+        }, { passive: false });
+        card.addEventListener('click', e => {
+          if (swiped) { e.stopImmediatePropagation(); e.preventDefault(); swiped = false; }
+        }, true);
+      }
+    }
+
+    // Subtle 3D tilt (pointer devices only)
+    if (!reduce && matchMedia('(hover: hover)').matches) {
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const rx = ((e.clientY - r.top) / r.height - 0.5) * -4;
+        const ry = ((e.clientX - r.left) / r.width - 0.5) * 4;
+        card.style.transform = `perspective(700px) translateY(-3px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+      });
+      card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+    }
+  });
 }
 
 async function handleCardLike(btn, id) {
