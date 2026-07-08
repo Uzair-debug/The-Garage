@@ -174,3 +174,14 @@ create trigger on_callout_created
 -- after insert or update on public.callout_requests, POSTs to the send-push
 -- edge function at https://fwxxuhyjuujdimqlyfys.supabase.co/functions/v1/send-push
 -- with a service-role Authorization header. (Token redacted — recreate via Dashboard.)
+
+-- ============================================================
+-- SECURITY HARDENING (2026-07-08)
+-- ============================================================
+
+-- Trigger functions are not callable via the REST API.
+revoke execute on function public.handle_new_user() from anon, authenticated, public;
+revoke execute on function public.handle_new_callout() from anon, authenticated, public;
+
+-- car-photos is a public bucket served by direct URL; listing is disabled
+-- (the broad "public read car photos" SELECT policy on storage.objects was dropped).
