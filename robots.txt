@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin.html
 Disallow: /callouts.html
 
-Sitemap: https://ourgarage.netlify.app/sitemap.xml
+Sitemap: https://ourgarage.pages.dev/sitemap.xml
