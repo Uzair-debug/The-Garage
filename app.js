@@ -240,6 +240,21 @@ async function uploadPhoto(file) {
   return data.publicUrl;
 }
 
+// ─── Scroll progress line under the nav (all pages) ──────────────
+(function () {
+  if (document.getElementById('scroll-progress')) return;
+  const bar = document.createElement('div');
+  bar.id = 'scroll-progress';
+  document.body.appendChild(bar);
+  const upd = () => {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.transform = `scaleX(${h > 0 ? Math.min(1, window.scrollY / h) : 0})`;
+  };
+  window.addEventListener('scroll', upd, { passive: true });
+  window.addEventListener('resize', upd, { passive: true });
+  upd();
+})();
+
 function showToast(msg, type = 'success') {
   const t = document.createElement('div');
   t.className = `toast ${type}`;

@@ -135,8 +135,18 @@
     speedLines.push({ y, height, x: -W * 0.3, alpha: 0.18 });
   }
 
-  // ─── Gauge needle (idles, then "revs" to a new position) ────────
+  // ─── Gauge needle (idles, revs with scroll velocity) ────────────
   const needle = { t: 0.08, target: 0.55, next: 0 };
+  let scrollBoost = 0, _lastY = window.scrollY, _lastT = 0;
+
+  window.addEventListener('scroll', () => {
+    const now = performance.now();
+    const dy = Math.abs(window.scrollY - _lastY);
+    const dt = Math.max(now - (_lastT || now - 16), 1);
+    scrollBoost = Math.min(1, scrollBoost + Math.min(dy / dt * 0.06, 0.25));
+    _lastY = window.scrollY;
+    _lastT = now;
+  }, { passive: true });
 
   function drawNeedle(ts) {
     if (!gauge) return;
@@ -145,8 +155,10 @@
       needle.next = ts + 3500 + Math.random() * 5000;
     }
     needle.t += (needle.target - needle.t) * 0.025;
+    scrollBoost *= 0.94; // ease back down after scrolling stops
+    const eff = Math.min(1, needle.t + scrollBoost);
     const a0 = Math.PI * 0.75, a1 = Math.PI * 1.9;
-    const ang = a0 + (a1 - a0) * (needle.t + Math.sin(ts / 260) * 0.004);
+    const ang = a0 + (a1 - a0) * (eff + Math.sin(ts / 260) * 0.004);
     const { cx, cy, r } = gauge;
     ctx.save();
     ctx.strokeStyle = 'rgba(230,48,48,0.20)';

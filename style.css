@@ -163,11 +163,20 @@ main {
 }
 
 .hero-bio-text h1 span {
-  background: linear-gradient(100deg, var(--accent) 20%, var(--accent-hot) 80%);
+  background: linear-gradient(105deg,
+    var(--accent) 30%, #ff8d6b 46%, #ffc4ae 50%, #ff8d6b 54%, var(--accent-hot) 70%);
+  background-size: 300% 100%;
+  background-position: 0% 0;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: var(--accent);
+  animation: glint 1.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
+}
+
+@keyframes glint {
+  from { background-position: 100% 0; }
+  to   { background-position: 0% 0; }
 }
 
 .hero-bio-text p {
@@ -1637,6 +1646,73 @@ a.hero-chip:hover { border-color: var(--page-accent, var(--accent)); color: #fff
   .profile-stats .stat-pill { flex: 1; }
 }
 
+/* ─── PIT-LANE TICKER ──────────────────────────────────────────── */
+.ticker {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: rgba(22,22,26,0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-top: 1.75rem;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.ticker-track {
+  display: inline-flex;
+  white-space: nowrap;
+  padding: 0.55rem 0;
+  animation: ticker-scroll 36s linear infinite;
+  will-change: transform;
+}
+.ticker:hover .ticker-track { animation-play-state: paused; }
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 2.75rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.ticker-item:hover { color: var(--text); }
+.tick-tag {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+.tick-tag.new { background: rgba(99,153,34,0.15); color: #8fbf4d; border: 1px solid rgba(99,153,34,0.35); }
+.tick-tag.hot { background: var(--accent-dim); color: var(--accent-hot); border: 1px solid rgba(230,48,48,0.35); }
+.ticker-item .reps { color: var(--accent-hot); font-weight: 600; }
+
+/* ─── SCROLL PROGRESS LINE ─────────────────────────────────────── */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hot));
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* ─── PAGE TRANSITIONS (browsers with View Transitions API) ────── */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: vt-out 0.16s ease both; }
+::view-transition-new(root) { animation: vt-in 0.2s ease both; }
+@keyframes vt-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(6px); } }
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -1647,4 +1723,11 @@ a.hero-chip:hover { border-color: var(--page-accent, var(--accent)); color: #fff
   }
   .car-card:hover { transform: none; }
   .car-card:hover .car-card-img { transform: none; }
+  .ticker-track { animation: none; }
+  .ticker { overflow-x: auto; }
+}
+
+/* Hide Dragy label on tight phone navs (icon stays) */
+@media (max-width: 600px) {
+  .dragy-txt { display: none; }
 }
