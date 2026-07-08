@@ -4,10 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Car – The Garage</title>
+  <meta name="description" content="Build details, specs and mods — The Garage.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0d0d0f">
   <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,21 +30,13 @@
 </nav>
 
 <div class="car-detail" id="car-detail">
-  <p style="color:var(--text-muted);padding:3rem 0;text-align:center">Loading…</p>
+  <p class="muted-center">Loading…</p>
 </div>
 
 <script src="app.js"></script>
 <script src="auth.js"></script>
 <script src="push.js"></script>
 <script>
-  const CAT_COLORS = {
-    Engine:'#e63030', Exhaust:'#ef9f27', Suspension:'#378add',
-    Exterior:'#1d9e75', Wheels:'#7f77dd', Interior:'#639922',
-    Brakes:'#d85a30', Audio:'#d4537e', Other:'#888780'
-  };
-
-  function normalizeMod(m) { return typeof m === 'string' ? { cat: 'Other', name: m } : m; }
-
   async function init() {
     initAuth();
     const params = new URLSearchParams(location.search);
@@ -101,11 +99,20 @@
     const specRows = [
       ['Make', car.make], ['Model', car.model], ['Year', car.year],
       ['Engine', car.engine], ['Power', car.power], ['Drivetrain', car.drivetrain],
-      ['Colour', car.colour], ['Status', car.status], ['Owner', car.owner],
+      ['Colour', car.colour], ['Status', car.status],
     ].filter(([, v]) => v);
 
-    const specsHtml = specRows.length
-      ? specRows.map(([k, v]) => `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${escapeHtml(v)}</span></div>`).join('')
+    // Owner row links to profile
+    const ownerRow = car.owner
+      ? `<div class="spec-row"><span class="spec-label">Owner</span><span class="spec-value">${
+          car.user_id
+            ? `<a class="owner-link" href="profile.html?id=${car.user_id}" style="color:inherit">${escapeHtml(car.owner)}</a>`
+            : escapeHtml(car.owner)
+        }</span></div>`
+      : '';
+
+    const specsHtml = (specRows.length || ownerRow)
+      ? specRows.map(([k, v]) => `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${escapeHtml(v)}</span></div>`).join('') + ownerRow
       : '<p style="color:var(--text-dim);font-size:0.85rem">No specs added.</p>';
 
     // Mods
@@ -258,13 +265,11 @@
     if (hasLiked(id) || !btn) return;
     const success = await likeCar(id);
     if (success) {
-      const countEl = document.getElementById('like-count');
-      const newCount = parseInt(countEl.textContent) + 1;
-      countEl.textContent = newCount;
-      btn.nextSibling && (btn.innerHTML = btn.innerHTML.replace(/\d+ rep/, `${newCount} rep`));
+      const newCount = parseInt(document.getElementById('like-count').textContent) + 1;
       btn.classList.add('liked');
-      btn.querySelector('svg').setAttribute('fill', 'currentColor');
-      btn.innerHTML = btn.innerHTML.replace('0 reps', `${newCount} rep${newCount === 1 ? '' : 's'}`);
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
+        <span id="like-count">${newCount}</span> ${newCount === 1 ? 'rep' : 'reps'}`;
     }
   }
 
@@ -292,7 +297,7 @@
         <div class="auth-form">
           <div class="field">
             <label>Message (optional)</label>
-            <textarea id="callout-msg" placeholder="e.g. Keen to link up for a shoot this weekend" maxlength="500" style="width:100%;min-height:90px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:0.9rem;padding:0.6rem 0.75rem;resize:vertical;outline:none"></textarea>
+            <textarea id="callout-msg" class="text-area" placeholder="e.g. Keen to link up for a shoot this weekend" maxlength="500" style="min-height:90px"></textarea>
           </div>
           <p class="auth-error" id="callout-error"></p>
           <button class="btn btn-primary" id="callout-send" onclick="sendCallout('${carId}')" style="width:100%;justify-content:center">Send request</button>
@@ -333,3 +338,4 @@
 </script>
 </body>
 </html>
+                                                

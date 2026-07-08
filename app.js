@@ -8,7 +8,7 @@ function sb() {
 }
 
 // Columns needed for the home grid — avoids pulling full photo arrays we don't show.
-const LIST_COLUMNS = 'id,year,make,model,engine,owner,status,likes,mods,photos,updated_at';
+const LIST_COLUMNS = 'id,year,make,model,engine,owner,user_id,status,likes,mods,photos,updated_at';
 
 async function getCars() {
   const { data, error } = await sb().from('cars').select(LIST_COLUMNS).order('updated_at', { ascending: false });
@@ -20,6 +20,12 @@ async function getCar(id) {
   const { data, error } = await sb().from('cars').select('*').eq('id', id).single();
   if (error) return null;
   return data;
+}
+
+async function getCarsByUser(userId) {
+  const { data, error } = await sb().from('cars').select(LIST_COLUMNS).eq('user_id', userId).order('updated_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
 }
 
 async function upsertCar(car) {

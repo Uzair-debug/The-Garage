@@ -108,6 +108,7 @@ function renderNavAuth(user) {
         <button class="user-avatar" onclick="toggleUserMenu(event)" title="${escapeHtml(user.email)}" aria-label="Account menu">${escapeHtml(initial)}<span class="avatar-dot" id="avatar-dot"></span></button>
         <div class="user-menu-panel" id="user-menu-panel">
           <div class="user-menu-email">${escapeHtml(user.email)}</div>
+          <a class="user-menu-item" href="profile.html?id=${user.id}">My Garage</a>
           <a class="user-menu-item" href="callouts.html">Callouts <span class="menu-count" id="callout-badge"></span></a>
           <button class="user-menu-item" id="push-toggle" onclick="handlePushToggle()">Enable notifications</button>
           ${adminItem}

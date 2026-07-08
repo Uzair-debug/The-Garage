@@ -4,10 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Members – The Garage</title>
+  <meta name="description" content="Member list — The Garage.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0d0d0f">
   <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -27,7 +34,7 @@
   <h1 id="page-title">Members</h1>
   <p class="subtitle" id="page-sub">Everyone who has signed up.</p>
   <div id="admin-content">
-    <p style="color:var(--text-muted);padding:2rem 0;text-align:center">Loading…</p>
+    <p class="muted-center">Loading…</p>
   </div>
 </div>
 
@@ -36,13 +43,6 @@
 <script src="push.js"></script>
 <script>
   const LASTSEEN_KEY = 'garage_admin_lastseen';
-
-  function fmtDate(iso) {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) +
-      ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  }
 
   async function init() {
     initAuth();
@@ -94,18 +94,8 @@
             ${escapeHtml(p.email || '(no email)')}
             ${isNew ? '<span class="badge badge-red" style="font-size:0.65rem">NEW</span>' : ''}
           </span>
-          <span class="spec-label">${fmtDate(p.created_at)}</span>
+          <span class="spec-label">${fmtDate(p.created_at, true)}</span>
         </div>`;
     }).join('');
 
-    document.getElementById('admin-content').innerHTML = `
-      <div class="form-section">
-        <h3>Sign-ups</h3>
-        ${rows}
-      </div>`;
-  }
-
-  init();
-</script>
-</body>
-</html>
+   

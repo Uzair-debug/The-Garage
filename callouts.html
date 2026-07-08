@@ -4,10 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Callouts – The Garage</title>
+  <meta name="description" content="Callout requests and replies — The Garage.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0d0d0f">
   <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -27,7 +33,7 @@
   <h1 id="page-title">Callouts</h1>
   <p class="subtitle" id="page-sub">Requests to link up about your cars.</p>
   <div id="callout-content">
-    <p style="color:var(--text-muted);padding:2rem 0;text-align:center">Loading…</p>
+    <p class="muted-center">Loading…</p>
   </div>
 </div>
 
@@ -35,13 +41,6 @@
 <script src="auth.js"></script>
 <script src="push.js"></script>
 <script>
-  function fmtDate(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
-      ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  }
-
   async function init() {
     initAuth();
     const user = await getCurrentUser();
@@ -76,10 +75,10 @@
       total ? 'Your callout requests and responses.' : 'Requests to link up about your cars.';
 
     document.getElementById('callout-content').innerHTML = (inHtml || sentHtml) ? `
-      ${incoming.length ? `<h3 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:0.5rem 0 0.75rem">Requests on your cars</h3>${inHtml}` : ''}
-      ${sent.length ? `<h3 style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:1.5rem 0 0.75rem">Your callouts</h3>${sentHtml}` : ''}
+      ${incoming.length ? `<h3 class="list-heading">Requests on your cars</h3>${inHtml}` : ''}
+      ${sent.length ? `<h3 class="list-heading spaced">Your callouts</h3>${sentHtml}` : ''}
     ` : `
-      <div style="text-align:center;padding:3rem 0;color:var(--text-muted)">
+      <div class="muted-center">
         <p>No callouts yet. Request one on someone's car, or wait for requests on yours.</p>
       </div>`;
   }
@@ -102,7 +101,7 @@
             : c.response
             ? `<div style="font-size:0.85rem;color:var(--text-muted);margin-top:8px"><strong style="color:var(--text)">You replied:</strong> ${escapeHtml(c.response)}</div>`
             : `<div class="reply-box" id="reply-${c.id}">
-                 <textarea placeholder="Reply in-app…" style="width:100%;min-height:64px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:0.88rem;padding:0.5rem 0.65rem;resize:vertical;outline:none"></textarea>
+                 <textarea class="text-area" placeholder="Reply in-app…" style="min-height:64px"></textarea>
                  <div style="display:flex;gap:8px;margin-top:8px">
                    <button class="btn btn-primary" style="font-size:0.8rem" onclick="sendResponse('${c.id}')">Send reply</button>
                    <button class="btn btn-danger" style="font-size:0.8rem" onclick="rejectCalloutUI('${c.id}')">Reject</button>
@@ -172,3 +171,4 @@
 </script>
 </body>
 </html>
+                                                                                                                                                                                                                                                    

@@ -4,10 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Add Car – The Garage</title>
+  <meta name="description" content="Add your build to The Garage — photos, specs and mods.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0d0d0f">
   <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -151,16 +157,6 @@
   let mods = [];
   let editId = null;
   let _authedUser = null;
-
-  const CAT_COLORS = {
-    Engine:'#e63030', Exhaust:'#ef9f27', Suspension:'#378add',
-    Exterior:'#1d9e75', Wheels:'#7f77dd', Interior:'#639922',
-    Brakes:'#d85a30', Audio:'#d4537e', Other:'#888780'
-  };
-
-  function normalizeMod(m) {
-    return typeof m === 'string' ? { cat: 'Other', name: m } : m;
-  }
 
   async function loadEdit() {
     const params = new URLSearchParams(location.search);
@@ -310,12 +306,4 @@
       await upsertCar(car);
       showToast(editId ? 'Car updated!' : 'Car added to the garage!');
       setTimeout(() => location.href = `car.html?id=${car.id}`, 800);
-    } catch (e) {
-      showToast('Error saving — check your connection.', 'error');
-      btn.textContent = 'Save Car';
-      btn.disabled = false;
-    }
-  }
-</script>
-</body>
-</html>
+    } cat
