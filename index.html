@@ -190,4 +190,35 @@
       return matchQ && matchStatus;
     });
 
-    if (sort === 'mods') cars.sort((a, b) => (b.mods?.length || 0) - (a.mods?.length 
+    if (sort === 'mods') cars.sort((a, b) => (b.mods?.length || 0) - (a.mods?.length || 0));
+    else if (sort === 'likes') cars.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+    else if (sort === 'az') cars.sort((a, b) => (a.make || '').localeCompare(b.make || ''));
+    else cars.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+
+    renderGrid(cars);
+  }
+
+  function renderGrid(cars) {
+    const grid = document.getElementById('car-grid');
+    const count = document.getElementById('car-count');
+    count.textContent = cars.length === 1 ? '1 Car' : `${cars.length} Cars`;
+
+    if (cars.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">${carIcon()}</div>
+          <h3>No cars found</h3>
+          <p>Try a different search or be the first to add a build.</p>
+          <br><a href="add.html" class="btn btn-primary" style="margin-top:0.5rem">Add a Car</a>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = cars.map(car => renderCarCard(car)).join('');
+  }
+
+  init();
+  initAuth();
+</script>
+</body>
+</html>

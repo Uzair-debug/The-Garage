@@ -306,4 +306,12 @@
       await upsertCar(car);
       showToast(editId ? 'Car updated!' : 'Car added to the garage!');
       setTimeout(() => location.href = `car.html?id=${car.id}`, 800);
-    } cat
+    } catch (e) {
+      showToast('Error saving — check your connection.', 'error');
+      btn.textContent = 'Save Car';
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

@@ -1251,4 +1251,300 @@ input, textarea { caret-color: var(--accent); }
   #nav-auth { gap: 6px; margin-left: 4px; }
 
   .car-grid { grid-template-columns: 1fr; gap: 0.85rem; }
-  .car-card-img, .car-card-
+  .car-card-img, .car-card-img-placeholder { height: 200px; }
+
+  /* Toolbar: search full width, controls share a row */
+  .garage-toolbar { gap: 8px; }
+  .search-wrap { flex-basis: 100%; }
+  .toolbar-right { width: 100%; }
+  .toolbar-right select { flex: 1; }
+
+  /* Full-width primary actions are easier to thumb */
+  .form-actions { flex-direction: column-reverse; }
+  .form-actions .btn { width: 100%; justify-content: center; }
+  .car-detail-actions { flex-wrap: wrap; }
+  .car-detail-actions .btn,
+  .car-detail-actions .like-btn-lg { flex: 1; justify-content: center; }
+
+  /* Toast spans the width so it never clips */
+  .toast { left: 1rem; right: 1rem; bottom: 1rem; text-align: center; }
+
+  /* Mod add-row: category on its own line, input + Add share the next */
+  .mod-add-row { flex-wrap: wrap; }
+  .mod-add-row select { width: 100%; flex-basis: 100%; }
+  .mod-add-row input { flex: 1; min-width: 0; }
+  .mod-add-row .btn { flex-shrink: 0; }
+
+  /* Long mod names wrap instead of pushing the row wider */
+  .mod-item-name { min-width: 0; word-break: break-word; }
+
+  /* Lightbox controls sized for thumbs, clear of the image */
+  .lightbox-nav { width: 40px; height: 40px; font-size: 1.2rem; }
+  .lightbox-nav.prev { left: 0.5rem; }
+  .lightbox-nav.next { right: 0.5rem; }
+  .lightbox-close { top: 0.5rem; right: 0.75rem; }
+  .lightbox img { max-width: 96vw; }
+}
+
+/* ─── SECTION TITLE ────────────────────────────────────────────── */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--text);
+  margin: 2.25rem 0 1rem;
+}
+.section-title::before {
+  content: '';
+  width: 22px; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hot));
+  border-radius: 2px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ─── SPOTLIGHT (most repped build) ────────────────────────────── */
+.spotlight {
+  position: relative;
+  display: block;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  min-height: 300px;
+  margin-bottom: 0.5rem;
+  background: var(--surface2);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.spotlight:hover {
+  border-color: rgba(230,48,48,0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 44px -18px rgba(230,48,48,0.25), 0 16px 36px -16px rgba(0,0,0,0.7);
+}
+.spotlight-img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.spotlight:hover .spotlight-img { transform: scale(1.03); }
+.spotlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(75deg, rgba(13,13,15,0.92) 8%, rgba(13,13,15,0.55) 45%, rgba(13,13,15,0.1) 80%);
+  pointer-events: none;
+}
+.spotlight-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  min-height: 300px;
+  padding: 1.75rem;
+}
+.spotlight-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #fff;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hot));
+  border-radius: 100px;
+  padding: 4px 12px;
+  margin-bottom: 0.9rem;
+  box-shadow: 0 4px 18px -4px rgba(230,48,48,0.6);
+}
+.spotlight-title {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  line-height: 1.1;
+  margin-bottom: 0.35rem;
+  text-shadow: 0 2px 18px rgba(0,0,0,0.6);
+}
+.spotlight-sub {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.spotlight-reps {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent-hot);
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .spotlight, .spotlight-body { min-height: 240px; }
+  .spotlight-body { padding: 1.25rem; }
+  .spotlight-title { font-size: 1.4rem; }
+}
+
+/* ─── FOOTER ───────────────────────────────────────────────────── */
+footer {
+  position: relative;
+  z-index: 2;
+  margin-top: 3rem;
+  border-top: 1px solid var(--border);
+  padding: 2rem 1.5rem 2.5rem;
+  text-align: center;
+}
+.footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.4rem;
+}
+.footer-logo svg { color: var(--accent); }
+.footer-logo span { color: var(--accent); }
+footer p {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+/* ─── STAGGERED CARD ENTRANCE ──────────────────────────────────── */
+.car-grid > .car-card { animation: fade-rise 0.4s ease both; }
+.car-grid > .car-card:nth-child(1)  { animation-delay: 0.02s; }
+.car-grid > .car-card:nth-child(2)  { animation-delay: 0.06s; }
+.car-grid > .car-card:nth-child(3)  { animation-delay: 0.10s; }
+.car-grid > .car-card:nth-child(4)  { animation-delay: 0.14s; }
+.car-grid > .car-card:nth-child(5)  { animation-delay: 0.18s; }
+.car-grid > .car-card:nth-child(6)  { animation-delay: 0.22s; }
+.car-grid > .car-card:nth-child(7)  { animation-delay: 0.26s; }
+.car-grid > .car-card:nth-child(8)  { animation-delay: 0.30s; }
+.car-grid > .car-card:nth-child(n+9) { animation-delay: 0.34s; }
+
+/* ─── SHARED UTILITY CLASSES (replaces repeated inline styles) ─── */
+.text-area {
+  width: 100%;
+  min-height: 80px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.text-area:focus { border-color: var(--accent); }
+
+.muted-center {
+  color: var(--text-muted);
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.owner-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.owner-link:hover { color: var(--accent); }
+
+.list-heading {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0.75rem;
+}
+.list-heading + .list-heading, .list-heading.spaced { margin-top: 1.5rem; }
+
+/* ─── PROFILE PAGE ─────────────────────────────────────────────── */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2.5rem 0 2rem;
+  flex-wrap: wrap;
+}
+.profile-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid rgba(230,48,48,0.3);
+  color: #f1a0a0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.profile-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.profile-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.3px;
+}
+.profile-you-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid rgba(230,48,48,0.25);
+  border-radius: 100px;
+  padding: 3px 10px;
+}
+.profile-stats { display: flex; gap: 10px; flex-shrink: 0; }
+
+@media (max-width: 600px) {
+  .profile-header { padding: 1.5rem 0; }
+  .profile-name { font-size: 1.3rem; }
+  .profile-stats { width: 100%; }
+  .profile-stats .stat-pill { flex: 1; }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .car-card:hover { transform: none; }
+  .car-card:hover .car-card-img { transform: none; }
+}

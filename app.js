@@ -258,3 +258,85 @@ const STATUS_META = {
   'Project Car':  { color: '#ef9f27', bg: '#ef9f2722' },
   'Stored':       { color: '#888780', bg: '#88878022' },
 };
+
+// Mod category colours (shared by car.html + add.html)
+const CAT_COLORS = {
+  Engine:'#e63030', Exhaust:'#ef9f27', Suspension:'#378add',
+  Exterior:'#1d9e75', Wheels:'#7f77dd', Interior:'#639922',
+  Brakes:'#d85a30', Audio:'#d4537e', Other:'#888780'
+};
+
+function normalizeMod(m) { return typeof m === 'string' ? { cat: 'Other', name: m } : m; }
+
+function fmtDate(iso, withYear = false) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const opts = { month: 'short', day: 'numeric' };
+  if (withYear) opts.year = 'numeric';
+  return d.toLocaleDateString(undefined, opts) +
+    ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+// ─── Shared car-card renderer (home grid + profile grid) ──────────
+function renderCarCard(car, { showOwner = true } = {}) {
+  const img = car.photos && car.photos.length
+    ? `<img class="car-card-img" src="${encodeURI(car.photos[0])}" alt="${escapeHtml(car.model)}" loading="lazy">`
+    : `<div class="car-card-img-placeholder">${carIcon()}</div>`;
+
+  const statusMeta = STATUS_META[car.status];
+  const statusChip = statusMeta
+    ? `<span class="car-chip" style="background:${statusMeta.bg};color:${statusMeta.color};border:1px solid ${statusMeta.color}55">${escapeHtml(car.status)}</span>` : '';
+
+  const modCount = car.mods?.length
+    ? `<span class="badge badge-red">${car.mods.length} mod${car.mods.length > 1 ? 's' : ''}</span>` : '';
+  const engine = car.engine ? `<span class="badge">${escapeHtml(car.engine)}</span>` : '';
+  const power = car.power ? `<span class="badge">${escapeHtml(car.power)}</span>` : '';
+
+  const liked = hasLiked(car.id);
+  const likeBtn = `
+    <button class="like-btn ${liked ? 'liked' : ''}" onclick="event.stopPropagation();handleCardLike(this,'${car.id}')" title="Rep this build">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
+      <span>${car.likes || 0}</span>
+    </button>`;
+
+  const ownerLine = showOwner
+    ? `<div class="car-card-sub">${car.owner && car.user_id
+        ? `<a class="owner-link" href="profile.html?id=${car.user_id}" onclick="event.stopPropagation()">${escapeHtml(car.owner)}</a>`
+        : car.owner ? escapeHtml(car.owner) : '&nbsp;'}</div>`
+    : '';
+
+  const go = `location.href='car.html?id=${car.id}'`;
+  return `
+    <div class="car-card" role="button" tabindex="0" onclick="${go}"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${go}}">
+      <div class="car-card-media">
+        ${img}
+        ${statusChip}
+        <span class="car-card-arrow" aria-hidden="true">→</span>
+      </div>
+      <div class="car-card-body">
+        <div class="car-card-header">
+          <div>
+            <div class="car-card-title">${car.year ? escapeHtml(car.year) + ' ' : ''}${escapeHtml(car.make || '')} ${escapeHtml(car.model || 'Unnamed Car')}</div>
+            ${ownerLine}
+          </div>
+          ${likeBtn}
+        </div>
+        <div class="car-card-badges">${engine}${power}${modCount}</div>
+      </div>
+    </div>`;
+}
+
+async function handleCardLike(btn, id) {
+  if (hasLiked(id)) return;
+  const success = await likeCar(id);
+  if (!success) return;
+  const span = btn.querySelector('span');
+  span.textContent = parseInt(span.textContent) + 1;
+  btn.classList.add('liked');
+  btn.querySelector('svg').setAttribute('fill', 'currentColor');
+  if (typeof allCars !== 'undefined') {
+    const car = allCars.find(c => c.id === id);
+    if (car) car.likes = (car.likes || 0) + 1;
+  }
+}

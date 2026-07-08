@@ -98,4 +98,14 @@
         </div>`;
     }).join('');
 
-   
+    document.getElementById('admin-content').innerHTML = `
+      <div class="form-section">
+        <h3>Sign-ups</h3>
+        ${rows}
+      </div>`;
+  }
+
+  init();
+</script>
+</body>
+</html>
