@@ -585,14 +585,53 @@ main {
 }
 .photo-thumb .remove-photo:hover { background: var(--accent); }
 
-/* Mods — form */
+/* Mods — form: one joined control (category | description | add) */
 .mod-add-row {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  align-items: stretch;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color 0.15s;
 }
-.mod-add-row select { width: 140px; flex-shrink: 0; }
-.mod-add-row input { flex: 1; }
+.mod-add-row:focus-within { border-color: var(--accent); }
+.mod-add-row select {
+  width: 132px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 0.6rem 0.75rem;
+  outline: none;
+  cursor: pointer;
+}
+.mod-add-row select option { background: var(--surface2); }
+.mod-add-row input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  padding: 0.6rem 0.75rem;
+}
+.mod-add-row input::placeholder { color: var(--text-dim); }
+.mod-add-row .btn {
+  border: none;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0 1.1rem;
+}
+.mod-add-row .btn:hover { background: #c92828; }
 
 .mods-list {
   display: flex;
@@ -1300,7 +1339,12 @@ input, textarea { caret-color: var(--accent); }
 
   /* Mod add-row: category on its own line, input + Add share the next */
   .mod-add-row { flex-wrap: wrap; }
-  .mod-add-row select { width: 100%; flex-basis: 100%; }
+  .mod-add-row select {
+    width: 100%;
+    flex-basis: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
   .mod-add-row input { flex: 1; min-width: 0; }
   .mod-add-row .btn { flex-shrink: 0; }
 
