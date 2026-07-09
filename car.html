@@ -205,7 +205,38 @@
           <h3>Mods · ${car.mods ? car.mods.length : 0}</h3>
           ${modsHtml}
         </div>
+      </div>
+
+      <div class="detail-card" style="margin-bottom:1rem">
+        <h3>Build Timeline</h3>
+        <div id="timeline-list"><p class="dim-note">Loading…</p></div>
+        ${isActualOwner ? `
+        <div class="tl-form">
+          <input type="text" id="tl-title" maxlength="120" placeholder="What changed? e.g. Fitted coilovers">
+          <textarea id="tl-body" class="text-area" maxlength="1000" placeholder="Details (optional)" style="min-height:56px"></textarea>
+          <div class="tl-form-row">
+            <label class="btn" style="position:relative;overflow:hidden">
+              <input type="file" id="tl-photo" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+              <span id="tl-photo-label">Add photo</span>
+            </label>
+            <button class="btn btn-primary" id="tl-post" onclick="postUpdate('${car.id}')">Post update</button>
+          </div>
+        </div>` : ''}
+      </div>
+
+      <div class="detail-card">
+        <h3>Comments <span id="comment-count" class="count-chip"></span></h3>
+        <div id="comments-list"><p class="dim-note">Loading…</p></div>
+        <div id="comment-form"></div>
       </div>`;
+
+    loadTimeline(car.id, canManage);
+    loadComments(car.id, canManage);
+    const tlPhoto = document.getElementById('tl-photo');
+    if (tlPhoto) tlPhoto.addEventListener('change', function () {
+      document.getElementById('tl-photo-label').textContent =
+        this.files.length ? '1 photo attached' : 'Add photo';
+    });
 
     // store photos ref for gallery
     window._photos = car.photos || [];
@@ -285,23 +316,132 @@
 
   async function handleLike(id) {
     const btn = document.getElementById('like-btn');
-    if (hasLiked(id) || !btn) return;
-    const success = await likeCar(id);
-    if (success === 'auth') {
+    if (!btn) return;
+    const res = await toggleRep(id);
+    if (res === 'auth') {
       requireAuth(async () => {
         await initLikes();
         handleLike(id);
       }, () => {});
       return;
     }
-    if (success) {
-      const newCount = parseInt(document.getElementById('like-count').textContent) + 1;
-      btn.classList.add('liked');
-      repBurst(btn);
-      btn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
-        <span id="like-count">${newCount}</span> ${newCount === 1 ? 'rep' : 'reps'}`;
+    if (!res) return;
+    const cur = parseInt(document.getElementById('like-count').textContent) || 0;
+    const n = res === 'liked' ? cur + 1 : Math.max(cur - 1, 0);
+    btn.classList.toggle('liked', res === 'liked');
+    if (res === 'liked') repBurst(btn);
+    btn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${res === 'liked' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
+      <span id="like-count">${n}</span> ${n === 1 ? 'rep' : 'reps'}`;
+  }
+
+  // ─── Build timeline ────────────────────────────────────────────
+  async function loadTimeline(carId, canManage) {
+    const list = document.getElementById('timeline-list');
+    if (!list) return;
+    const ups = await getUpdates(carId);
+    if (!ups.length) {
+      list.innerHTML = `<p class="dim-note">No updates yet — the story starts here.</p>`;
+      return;
     }
+    list.innerHTML = `<div class="timeline">` + ups.map(u => `
+      <div class="tl-item">
+        <span class="tl-dot"></span>
+        <div class="tl-content">
+          <div class="tl-date">${fmtDate(u.created_at, true)}</div>
+          <div class="tl-title">${escapeHtml(u.title)}</div>
+          ${u.body ? `<div class="tl-text">${escapeHtml(u.body)}</div>` : ''}
+          ${u.photo ? `<img class="tl-photo" src="${encodeURI(thumbUrl(u.photo))}" onerror="this.onerror=null;this.src='${encodeURI(u.photo)}'" alt="" loading="lazy" onclick="window.open('${encodeURI(u.photo)}','_blank')">` : ''}
+          ${canManage ? `<button class="inline-del" onclick="delUpdate('${u.id}','${carId}')">Delete</button>` : ''}
+        </div>
+      </div>`).join('') + `</div>`;
+  }
+
+  async function postUpdate(carId) {
+    const title = document.getElementById('tl-title').value.trim();
+    if (!title) { showToast('Give the update a title.', 'error'); return; }
+    const btn = document.getElementById('tl-post');
+    btn.disabled = true; btn.textContent = 'Posting…';
+    try {
+      let photo = null;
+      const fileInput = document.getElementById('tl-photo');
+      if (fileInput.files.length) photo = await uploadPhoto(fileInput.files[0]);
+      await addUpdate(carId, title, document.getElementById('tl-body').value, photo);
+      document.getElementById('tl-title').value = '';
+      document.getElementById('tl-body').value = '';
+      fileInput.value = '';
+      document.getElementById('tl-photo-label').textContent = 'Add photo';
+      showToast('Update posted!');
+      loadTimeline(carId, true);
+    } catch (e) {
+      console.error(e);
+      showToast('Could not post update.', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Post update';
+    }
+  }
+
+  async function delUpdate(id, carId) {
+    if (!confirm('Delete this update?')) return;
+    try { await deleteUpdate(id); loadTimeline(carId, true); }
+    catch (e) { showToast('Could not delete.', 'error'); }
+  }
+
+  // ─── Comments ──────────────────────────────────────────────────
+  async function loadComments(carId, canModerate) {
+    const list = document.getElementById('comments-list');
+    if (!list) return;
+    const [items, user] = await Promise.all([getComments(carId), getCurrentUser()]);
+    const countEl = document.getElementById('comment-count');
+    if (countEl) countEl.textContent = items.length ? `· ${items.length}` : '';
+
+    list.innerHTML = items.length ? items.map(c => `
+      <div class="comment">
+        <div class="comment-avatar">${escapeHtml((c.author || '?')[0].toUpperCase())}</div>
+        <div class="comment-main">
+          <div class="comment-head">
+            <span class="comment-author">${escapeHtml(c.author || 'Member')}</span>
+            <span class="comment-time">${fmtDate(c.created_at)}</span>
+          </div>
+          <div class="comment-body">${escapeHtml(c.body)}</div>
+        </div>
+        ${(user && c.user_id === user.id) || canModerate
+          ? `<button class="inline-del" onclick="delComment('${c.id}','${carId}',${canModerate})" title="Delete">×</button>` : ''}
+      </div>`).join('')
+      : `<p class="dim-note">No comments yet — be the first.</p>`;
+
+    const form = document.getElementById('comment-form');
+    if (user) {
+      form.innerHTML = `
+        <div class="comment-compose">
+          <textarea id="comment-input" class="text-area" maxlength="1000" placeholder="Say something about this build…" style="min-height:56px"></textarea>
+          <button class="btn btn-primary" id="comment-post" onclick="postComment('${carId}',${canModerate})">Post</button>
+        </div>`;
+    } else {
+      form.innerHTML = `<button class="btn" onclick="requireAuth(async () => { await initLikes(); loadComments('${carId}', ${canModerate}); }, () => {})">Sign in to comment</button>`;
+    }
+  }
+
+  async function postComment(carId, canModerate) {
+    const input = document.getElementById('comment-input');
+    const body = input.value.trim();
+    if (!body) return;
+    const btn = document.getElementById('comment-post');
+    btn.disabled = true; btn.textContent = 'Posting…';
+    try {
+      await addComment(carId, body);
+      loadComments(carId, canModerate);
+    } catch (e) {
+      console.error(e);
+      showToast('Could not post comment.', 'error');
+      btn.disabled = false; btn.textContent = 'Post';
+    }
+  }
+
+  async function delComment(id, carId, canModerate) {
+    if (!confirm('Delete this comment?')) return;
+    try { await deleteComment(id); loadComments(carId, canModerate); }
+    catch (e) { showToast('Could not delete.', 'error'); }
   }
 
   // ─── Request Callout ───────────────────────────────────────────

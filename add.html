@@ -240,13 +240,26 @@
     const grid = document.getElementById('photo-preview');
     grid.innerHTML = photos.map((src, i) => `
       <div class="photo-thumb">
-        <img src="${src}" alt="Photo ${i + 1}">
+        <img src="${thumbUrl(src)}" onerror="this.onerror=null;this.src='${src}'" alt="Photo ${i + 1}">
+        ${i === 0 ? '<span class="cover-badge">Cover</span>' : ''}
         <button class="remove-photo" onclick="removePhoto(${i})" title="Remove">×</button>
+        <div class="thumb-tools">
+          ${i > 0 ? `<button onclick="movePhoto(${i},-1)" title="Move left">‹</button>` : ''}
+          ${i > 0 ? `<button onclick="makeCover(${i})" title="Make cover photo">★</button>` : ''}
+          ${i < photos.length - 1 ? `<button onclick="movePhoto(${i},1)" title="Move right">›</button>` : ''}
+        </div>
       </div>`).join('');
     document.getElementById('photo-drop').style.display = photos.length >= 5 ? 'none' : '';
   }
 
   function removePhoto(i) { photos.splice(i, 1); renderPreviews(); }
+  function movePhoto(i, d) {
+    const j = i + d;
+    if (j < 0 || j >= photos.length) return;
+    [photos[i], photos[j]] = [photos[j], photos[i]];
+    renderPreviews();
+  }
+  function makeCover(i) { photos.unshift(photos.splice(i, 1)[0]); renderPreviews(); }
 
   document.getElementById('mod-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); addMod(); }

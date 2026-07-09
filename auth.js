@@ -209,6 +209,7 @@ function showAuthModal(onSuccess, onCancel) {
         <button class="btn btn-primary" id="auth-submit" onclick="submitAuth()" style="width:100%;justify-content:center;margin-top:4px">
           Sign in
         </button>
+        <p class="auth-forgot"><button onclick="forgotPassword()">Forgot password?</button></p>
       </div>
 
       <p class="auth-toggle">
@@ -285,6 +286,21 @@ async function submitAuth() {
   closeAuthModal();
   renderNavAuth(_currentUser);
   if (cb) cb(_currentUser);
+}
+
+// ─── Forgot password ─────────────────────────────────────────────
+async function forgotPassword() {
+  const email = (document.getElementById('auth-email')?.value || '').trim();
+  const errEl = document.getElementById('auth-error');
+  if (!email) { errEl.textContent = 'Type your email above first, then tap "Forgot password?".'; return; }
+  errEl.textContent = 'Sending…';
+  const { error } = await sb().auth.resetPasswordForEmail(email, {
+    redirectTo: location.origin + '/reset.html',
+  });
+  if (error) { errEl.textContent = error.message; return; }
+  errEl.style.color = '#7fc25a';
+  errEl.textContent = 'Reset link sent — check your email.';
+  setTimeout(() => { errEl.style.color = ''; errEl.textContent = ''; }, 8000);
 }
 
 // ─── Guard: redirect to modal if not logged in ───────────────────

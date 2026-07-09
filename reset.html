@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password – The Garage</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#0d0d0f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="bg.js"></script>
+
+<nav>
+  <div class="nav-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+    <a href="index.html">The <span style="color:var(--accent)">Garage</span></a>
+  </div>
+  <div class="nav-actions">
+    <a href="index.html" class="btn btn-ghost">← Back to Garage</a>
+  </div>
+</nav>
+
+<div class="form-page" style="max-width:420px">
+  <h1>Reset password</h1>
+  <p class="subtitle" id="reset-sub">Checking your reset link…</p>
+
+  <div class="form-section" id="reset-form" style="display:none">
+    <div class="field">
+      <label>New password</label>
+      <input type="password" id="new-pass" placeholder="At least 6 characters" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label>Confirm password</label>
+      <input type="password" id="new-pass2" placeholder="Type it again" autocomplete="new-password">
+    </div>
+    <p class="auth-error" id="reset-error"></p>
+    <button class="btn btn-primary" id="reset-btn" onclick="doReset()" style="width:100%;justify-content:center">Set new password</button>
+  </div>
+
+  <div id="reset-dead" style="display:none">
+    <p class="muted-center" style="padding:1.5rem 0">This reset link is invalid or has expired.<br>
+    Request a new one from the sign-in screen.</p>
+    <a href="index.html" class="btn" style="width:100%;justify-content:center">Back to Garage</a>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  // The recovery link signs the user in via the URL hash; wait for that.
+  let _ready = false;
+
+  sb().auth.onAuthStateChange((event, session) => {
+    if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session) showForm();
+  });
+
+  // Fallback: session may already be parsed by the time we attach
+  setTimeout(async () => {
+    if (_ready) return;
+    const { data: { session } } = await sb().auth.getSession();
+    if (session) showForm();
+    else {
+      document.getElementById('reset-sub').textContent = '';
+      document.getElementById('reset-dead').style.display = '';
+    }
+  }, 1500);
+
+  function showForm() {
+    if (_ready) return;
+    _ready = true;
+    document.getElementById('reset-sub').textContent = 'Choose a new password for your account.';
+    document.getElementById('reset-form').style.display = '';
+    document.getElementById('new-pass').focus();
+  }
+
+  async function doReset() {
+    const p1 = document.getElementById('new-pass').value;
+    const p2 = document.getElementById('new-pass2').value;
+    const err = document.getElementById('reset-error');
+    const btn = document.getElementById('reset-btn');
+    if (p1.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+    if (p1 !== p2) { err.textContent = "Passwords don't match."; return; }
+    err.textContent = '';
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const { error } = await sb().auth.updateUser({ password: p1 });
+    if (error) {
+      err.textContent = error.message;
+      btn.disabled = false; btn.textContent = 'Set new password';
+      return;
+    }
+    showToast('Password updated — welcome back!');
+    setTimeout(() => location.href = 'index.html', 1200);
+  }
+
+  document.querySelectorAll('#reset-form input').forEach(i =>
+    i.addEventListener('keydown', e => { if (e.key === 'Enter') doReset(); }));
+</script>
+</body>
+</html>

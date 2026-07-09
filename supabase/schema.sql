@@ -206,3 +206,31 @@ create policy "unlike own" on public.car_likes for delete to authenticated using
 -- Trigger keeps cars.likes in sync; legacy counts remain as baseline.
 -- bump_likes() +1 on insert / -1 on delete; execute revoked from API roles.
 -- increment_likes() RPC execute revoked (was anonymously callable).
+
+
+-- ============================================================
+-- COMMENTS + BUILD TIMELINE (2026-07-09)
+-- ============================================================
+
+create table public.car_comments (
+  id         uuid primary key default gen_random_uuid(),
+  car_id     text not null references public.cars(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  author     text,
+  body       text not null check (char_length(body) between 1 and 1000),
+  created_at timestamptz default now()
+);
+-- RLS: public read; insert as self; delete by author, the car's owner, or admin.
+
+create table public.car_updates (
+  id         uuid primary key default gen_random_uuid(),
+  car_id     text not null references public.cars(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  title      text not null check (char_length(title) between 1 and 120),
+  body       text check (body is null or char_length(body) <= 1000),
+  photo      text,
+  created_at timestamptz default now()
+);
+-- RLS: public read; only the car's owner may post; delete by author or admin.
+
+-- increment_likes(text) has been dropped (replaced by car_likes + trigger).

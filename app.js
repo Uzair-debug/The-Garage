@@ -165,22 +165,86 @@ async function initLikes() {
   return _myLikes;
 }
 
-// Returns true on success, false if already liked, 'auth' if signed out.
-async function likeCar(id) {
+// Toggle a rep. Returns 'liked', 'unliked', 'auth' (signed out) or null (error).
+async function toggleRep(id) {
   const { data: { user } } = await sb().auth.getUser();
   if (!user) return 'auth';
-  if (_myLikes && _myLikes.has(id)) return false;
+  if (_myLikes && _myLikes.has(id)) {
+    const { error } = await sb().from('car_likes').delete().eq('car_id', id).eq('user_id', user.id);
+    if (error) return null;
+    _myLikes.delete(id);
+    return 'unliked';
+  }
   const { error } = await sb().from('car_likes').insert({ car_id: id, user_id: user.id });
   if (error) {
     if (_myLikes) _myLikes.add(id); // unique violation → already repped
-    return false;
+    return null;
   }
   if (!_myLikes) _myLikes = new Set();
   _myLikes.add(id);
-  return true;
+  return 'liked';
 }
 
 function hasLiked(id) { return !!_myLikes && _myLikes.has(id); }
+
+// ─── Comments ──────────────────────────────────────────────────────
+async function getComments(carId) {
+  const { data, error } = await sb().from('car_comments')
+    .select('id,user_id,author,body,created_at')
+    .eq('car_id', carId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+async function addComment(carId, body) {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) throw new Error('Not signed in');
+  const author = await myDisplayName(user);
+  const { error } = await sb().from('car_comments')
+    .insert({ car_id: carId, user_id: user.id, author, body: body.trim() });
+  if (error) throw error;
+}
+
+async function deleteComment(id) {
+  const { error } = await sb().from('car_comments').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ─── Build timeline updates ────────────────────────────────────────
+async function getUpdates(carId) {
+  const { data, error } = await sb().from('car_updates')
+    .select('id,user_id,title,body,photo,created_at')
+    .eq('car_id', carId)
+    .order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+async function addUpdate(carId, title, body, photo) {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) throw new Error('Not signed in');
+  const { error } = await sb().from('car_updates').insert({
+    car_id: carId, user_id: user.id,
+    title: title.trim(), body: (body || '').trim() || null, photo: photo || null,
+  });
+  if (error) throw error;
+}
+
+async function deleteUpdate(id) {
+  const { error } = await sb().from('car_updates').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// Display name = their car's owner name if set, else email prefix.
+async function myDisplayName(user) {
+  try {
+    const { data } = await sb().from('cars').select('owner')
+      .eq('user_id', user.id).not('owner', 'is', null).limit(1);
+    if (data && data[0] && data[0].owner) return data[0].owner;
+  } catch (e) {}
+  return (user.email || 'Member').split('@')[0];
+}
 
 function generateId() {
   return (crypto.randomUUID && crypto.randomUUID()) ||
@@ -205,7 +269,7 @@ const MAX_PHOTO_DIM = 1600; // px, longest edge
 // Decode a File honouring its EXIF orientation, downscale, and re-encode
 // to a JPEG Blob. Using createImageBitmap with imageOrientation:'from-image'
 // bakes the correct rotation in, so phone photos no longer show sideways.
-async function compressImage(file) {
+async function compressImage(file, maxDim = MAX_PHOTO_DIM) {
   let bitmap;
   try {
     bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
@@ -215,7 +279,7 @@ async function compressImage(file) {
   }
 
   let { width, height } = bitmap;
-  const scale = Math.min(1, MAX_PHOTO_DIM / Math.max(width, height));
+  const scale = Math.min(1, maxDim / Math.max(width, height));
   width = Math.round(width * scale);
   height = Math.round(height * scale);
 
@@ -234,17 +298,30 @@ async function compressImage(file) {
   });
 }
 
-// Compress + upload a File to Storage; returns the public URL.
+const THUMB_DIM = 420; // px, longest edge for grid thumbnails
+
+// Full-size URL → thumbnail URL by naming convention (id.jpg → id_t.jpg).
+// Old photos have no thumb; callers fall back to the full image onerror.
+function thumbUrl(u) {
+  if (typeof u === 'string' && u.includes('/car-photos/') && u.endsWith('.jpg') && !u.endsWith('_t.jpg')) {
+    return u.slice(0, -4) + '_t.jpg';
+  }
+  return u;
+}
+
+// Compress + upload a File to Storage (full + thumb); returns the public URL.
 async function uploadPhoto(file) {
-  const blob = await compressImage(file);
-  const path = `${generateId()}.jpg`;
-  const { error } = await sb().storage.from(PHOTO_BUCKET).upload(path, blob, {
-    contentType: 'image/jpeg',
-    cacheControl: '3600',
-    upsert: false,
-  });
+  const [blob, thumbBlob] = await Promise.all([
+    compressImage(file),
+    compressImage(file, THUMB_DIM),
+  ]);
+  const id = generateId();
+  const opts = { contentType: 'image/jpeg', cacheControl: '3600', upsert: false };
+  const { error } = await sb().storage.from(PHOTO_BUCKET).upload(`${id}.jpg`, blob, opts);
   if (error) throw error;
-  const { data } = sb().storage.from(PHOTO_BUCKET).getPublicUrl(path);
+  // Thumb failure shouldn't block the upload — the grid falls back to full size.
+  try { await sb().storage.from(PHOTO_BUCKET).upload(`${id}_t.jpg`, thumbBlob, opts); } catch (e) {}
+  const { data } = sb().storage.from(PHOTO_BUCKET).getPublicUrl(`${id}.jpg`);
   return data.publicUrl;
 }
 
@@ -322,7 +399,7 @@ function fmtDate(iso, withYear = false) {
 // ─── Shared car-card renderer (home grid + profile grid) ──────────
 function renderCarCard(car, { showOwner = true } = {}) {
   const img = car.photos && car.photos.length
-    ? `<img class="car-card-img" src="${encodeURI(car.photos[0])}" alt="${escapeHtml(car.model)}" loading="lazy">`
+    ? `<img class="car-card-img" src="${encodeURI(thumbUrl(car.photos[0]))}" onerror="this.onerror=null;this.src='${encodeURI(car.photos[0])}'" alt="${escapeHtml(car.model)}" loading="lazy">`
     : `<div class="car-card-img-placeholder">${carIcon()}</div>`;
 
   const statusMeta = STATUS_META[car.status];
@@ -435,7 +512,8 @@ function initCardExtras(root) {
         let idx = 0, timer = null, swiped = false;
         const show = i => {
           idx = (i + photos.length) % photos.length;
-          img.src = photos[idx];
+          img.onerror = () => { img.onerror = null; img.src = photos[idx]; };
+          img.src = thumbUrl(photos[idx]);
           dots.forEach((d, j) => d.classList.toggle('active', j === idx));
         };
         card.addEventListener('mouseenter', () => {
@@ -478,23 +556,29 @@ function initCardExtras(root) {
 }
 
 async function handleCardLike(btn, id) {
-  if (hasLiked(id)) return;
-  const success = await likeCar(id);
-  if (success === 'auth') {
+  const res = await toggleRep(id);
+  if (res === 'auth') {
     requireAuth(async () => {
       await initLikes();
       handleCardLike(btn, id);
     }, () => {});
     return;
   }
-  if (!success) return;
+  if (!res) return;
   const span = btn.querySelector('span');
-  span.textContent = parseInt(span.textContent) + 1;
-  btn.classList.add('liked');
-  btn.querySelector('svg').setAttribute('fill', 'currentColor');
-  repBurst(btn);
+  const n = parseInt(span.textContent) || 0;
+  if (res === 'liked') {
+    span.textContent = n + 1;
+    btn.classList.add('liked');
+    btn.querySelector('svg').setAttribute('fill', 'currentColor');
+    repBurst(btn);
+  } else {
+    span.textContent = Math.max(n - 1, 0);
+    btn.classList.remove('liked');
+    btn.querySelector('svg').setAttribute('fill', 'none');
+  }
   if (typeof allCars !== 'undefined') {
     const car = allCars.find(c => c.id === id);
-    if (car) car.likes = (car.likes || 0) + 1;
+    if (car) car.likes = res === 'liked' ? (car.likes || 0) + 1 : Math.max((car.likes || 0) - 1, 0);
   }
 }
