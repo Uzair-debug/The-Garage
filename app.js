@@ -153,26 +153,34 @@ async function getProfiles() {
   return data || [];
 }
 
+// ─── Reps: tied to accounts — one per user per car, server-enforced ──
+let _myLikes = null;
+
+// Load the signed-in user's liked set (call before rendering hearts).
+async function initLikes() {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) { _myLikes = new Set(); return _myLikes; }
+  const { data, error } = await sb().from('car_likes').select('car_id').eq('user_id', user.id);
+  _myLikes = new Set((data || []).map(r => r.car_id));
+  return _myLikes;
+}
+
+// Returns true on success, false if already liked, 'auth' if signed out.
 async function likeCar(id) {
-  const liked = getLiked();
-  if (liked.has(id)) return false;
-  const { error } = await sb().rpc('increment_likes', { car_id: id });
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) return 'auth';
+  if (_myLikes && _myLikes.has(id)) return false;
+  const { error } = await sb().from('car_likes').insert({ car_id: id, user_id: user.id });
   if (error) {
-    // fallback: manual increment
-    const car = await getCar(id);
-    if (car) await sb().from('cars').update({ likes: (car.likes || 0) + 1 }).eq('id', id);
+    if (_myLikes) _myLikes.add(id); // unique violation → already repped
+    return false;
   }
-  liked.add(id);
-  localStorage.setItem('garage_liked', JSON.stringify([...liked]));
+  if (!_myLikes) _myLikes = new Set();
+  _myLikes.add(id);
   return true;
 }
 
-function getLiked() {
-  try { return new Set(JSON.parse(localStorage.getItem('garage_liked')) || []); }
-  catch { return new Set(); }
-}
-
-function hasLiked(id) { return getLiked().has(id); }
+function hasLiked(id) { return !!_myLikes && _myLikes.has(id); }
 
 function generateId() {
   return (crypto.randomUUID && crypto.randomUUID()) ||
@@ -370,6 +378,29 @@ function renderCarCard(car, { showOwner = true } = {}) {
     </div>`;
 }
 
+// ─── Rep spark burst: little ember explosion from a like button ───
+function repBurst(el) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !el || !el.animate) return;
+  const r = el.getBoundingClientRect();
+  const wrap = document.createElement('div');
+  wrap.style.cssText = `position:fixed;left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px;width:0;height:0;z-index:400;pointer-events:none`;
+  document.body.appendChild(wrap);
+  const colors = ['#e63030', '#ff5a3c', '#ffb199', '#ffd25e'];
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement('div');
+    const size = 3 + Math.random() * 4;
+    s.style.cssText = `position:absolute;left:0;top:0;width:${size}px;height:${size}px;border-radius:50%;background:${colors[i % colors.length]}`;
+    wrap.appendChild(s);
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 26 + Math.random() * 40;
+    s.animate([
+      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+      { transform: `translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist + 12}px) scale(0.15)`, opacity: 0 }
+    ], { duration: 500 + Math.random() * 350, easing: 'cubic-bezier(0.2,0.8,0.3,1)', fill: 'forwards' });
+  }
+  setTimeout(() => wrap.remove(), 950);
+}
+
 // ─── Card extras: scroll reveal, photo carousel, hover tilt ───────
 // Call after rendering a .car-grid (index + profile do this).
 function initCardExtras(root) {
@@ -449,11 +480,19 @@ function initCardExtras(root) {
 async function handleCardLike(btn, id) {
   if (hasLiked(id)) return;
   const success = await likeCar(id);
+  if (success === 'auth') {
+    requireAuth(async () => {
+      await initLikes();
+      handleCardLike(btn, id);
+    }, () => {});
+    return;
+  }
   if (!success) return;
   const span = btn.querySelector('span');
   span.textContent = parseInt(span.textContent) + 1;
   btn.classList.add('liked');
   btn.querySelector('svg').setAttribute('fill', 'currentColor');
+  repBurst(btn);
   if (typeof allCars !== 'undefined') {
     const car = allCars.find(c => c.id === id);
     if (car) car.likes = (car.likes || 0) + 1;

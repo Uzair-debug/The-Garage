@@ -185,3 +185,24 @@ revoke execute on function public.handle_new_callout() from anon, authenticated,
 
 -- car-photos is a public bucket served by direct URL; listing is disabled
 -- (the broad "public read car photos" SELECT policy on storage.objects was dropped).
+
+
+-- ============================================================
+-- ACCOUNT-BASED REPS (2026-07-09)
+-- ============================================================
+
+create table public.car_likes (
+  car_id     text not null references public.cars(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz default now(),
+  primary key (car_id, user_id)
+);
+
+alter table public.car_likes enable row level security;
+create policy "public read likes" on public.car_likes for select using (true);
+create policy "like as self" on public.car_likes for insert to authenticated with check (user_id = auth.uid());
+create policy "unlike own" on public.car_likes for delete to authenticated using (user_id = auth.uid());
+
+-- Trigger keeps cars.likes in sync; legacy counts remain as baseline.
+-- bump_likes() +1 on insert / -1 on delete; execute revoked from API roles.
+-- increment_likes() RPC execute revoked (was anonymously callable).

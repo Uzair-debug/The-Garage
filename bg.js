@@ -175,11 +175,51 @@
     ctx.restore();
   }
 
+  // ─── Passing headlights: a car drives by the garage at night ─────
+  let headlights = null;
+  let nextHeadlight = 5000;
+
+  function drawHeadlights(ts) {
+    if (!headlights) {
+      if (ts > nextHeadlight) {
+        const dir = Math.random() > 0.5 ? 1 : -1;
+        headlights = {
+          dir,
+          x: dir > 0 ? -W * 0.15 : W * 1.15,
+          y: H * (0.55 + Math.random() * 0.28),
+          speed: W * (0.0045 + Math.random() * 0.0025),
+        };
+      }
+      return;
+    }
+    const h = headlights;
+    h.x += h.speed * h.dir;
+    if ((h.dir > 0 && h.x > W * 1.15) || (h.dir < 0 && h.x < -W * 0.15)) {
+      headlights = null;
+      nextHeadlight = ts + 9000 + Math.random() * 9000;
+      return;
+    }
+    const prog = Math.min(Math.max(h.dir > 0 ? h.x / W : 1 - h.x / W, 0), 1);
+    const alpha = Math.sin(prog * Math.PI) * 0.085;
+    const gap = Math.min(W, H) * 0.05;
+    for (const off of [-gap, gap]) {
+      const g = ctx.createRadialGradient(h.x + off, h.y, 0, h.x + off, h.y, gap * 2.4);
+      g.addColorStop(0, `rgba(255,240,200,${alpha})`);
+      g.addColorStop(0.4, `rgba(255,235,190,${alpha * 0.45})`);
+      g.addColorStop(1, 'rgba(255,240,200,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(h.x + off, h.y, gap * 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   // ─── Main loop ───────────────────────────────────────────────────
   function animate(ts) {
     requestAnimationFrame(animate);
     ctx.clearRect(0, 0, W, H);
     if (staticCanvas) ctx.drawImage(staticCanvas, 0, 0);
+    drawHeadlights(ts);
     drawNeedle(ts);
 
     sparks.forEach((s, i) => {

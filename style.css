@@ -324,6 +324,26 @@ main {
   position: relative;
   overflow: hidden;
 }
+/* Showroom shine sweeping across the paintwork on hover */
+.car-card-media::before {
+  content: '';
+  position: absolute;
+  top: -40%; bottom: -40%;
+  left: -75%;
+  width: 50%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,0.14) 50%, transparent);
+  transform: skewX(-18deg);
+  z-index: 1;
+  pointer-events: none;
+  transition: left 0s;
+}
+.car-card:hover .car-card-media::before {
+  left: 125%;
+  transition: left 0.65s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .car-card:hover .car-card-media::before { transition: none; }
+}
 .car-card-media::after {
   content: '';
   position: absolute;

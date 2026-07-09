@@ -223,7 +223,7 @@
 
   async function init() {
     renderSkeletons();
-    allCars = await getCars();
+    [allCars] = await Promise.all([getCars(), initLikes()]);
 
     countUp(document.getElementById('stat-cars'), allCars.length);
     countUp(document.getElementById('stat-mods'), allCars.reduce((n, c) => n + (c.mods ? c.mods.length : 0), 0));
@@ -273,6 +273,27 @@
     grid.innerHTML = cars.map(car => renderCarCard(car)).join('');
     initCardExtras(grid);
   }
+
+  // Mouse parallax: hero layers + background canvas drift at different depths
+  (function () {
+    if (!matchMedia('(hover: hover)').matches ||
+        matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const text = document.querySelector('.hero-bio-text');
+    const stats = document.querySelector('.hero-bio-stats');
+    let raf = null;
+    window.addEventListener('mousemove', e => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        const dx = e.clientX / window.innerWidth - 0.5;
+        const dy = e.clientY / window.innerHeight - 0.5;
+        if (text) text.style.transform = `translate(${dx * -7}px, ${dy * -4}px)`;
+        if (stats) stats.style.transform = `translate(${dx * 12}px, ${dy * 8}px)`;
+        const bgc = document.getElementById('bg-canvas');
+        if (bgc) bgc.style.transform = `translate(${dx * -20}px, ${dy * -14}px) scale(1.03)`;
+      });
+    }, { passive: true });
+  })();
 
   init();
   initAuth();
