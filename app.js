@@ -236,8 +236,28 @@ async function deleteUpdate(id) {
   if (error) throw error;
 }
 
-// Display name = their car's owner name if set, else email prefix.
+// ─── Member cards: public display name / bio / avatar ─────────────
+async function getMemberCard(userId) {
+  const { data, error } = await sb().from('member_cards')
+    .select('display_name,bio,avatar').eq('id', userId).maybeSingle();
+  if (error) { console.error(error); return null; }
+  return data || null;
+}
+
+async function saveMemberCard(card) {
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) throw new Error('Not signed in');
+  const { error } = await sb().from('member_cards')
+    .upsert({ id: user.id, ...card, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
+// Display name = member card, else their car's owner name, else email prefix.
 async function myDisplayName(user) {
+  try {
+    const card = await getMemberCard(user.id);
+    if (card && card.display_name) return card.display_name;
+  } catch (e) {}
   try {
     const { data } = await sb().from('cars').select('owner')
       .eq('user_id', user.id).not('owner', 'is', null).limit(1);

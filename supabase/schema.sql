@@ -209,6 +209,25 @@ create policy "unlike own" on public.car_likes for delete to authenticated using
 
 
 -- ============================================================
+-- MEMBER CARDS + COMMENT NOTIFICATIONS (2026-07-10)
+-- ============================================================
+
+create table public.member_cards (
+  id           uuid primary key references auth.users(id) on delete cascade,
+  display_name text check (display_name is null or char_length(display_name) between 1 and 40),
+  bio          text check (bio is null or char_length(bio) <= 300),
+  avatar       text,
+  updated_at   timestamptz default now()
+);
+-- RLS: public read; insert/update own row only. Emails stay private in `profiles`.
+
+-- car_comments.owner_id (filled by handle_new_comment() before-insert trigger)
+-- powers push + realtime notifications to the car's owner.
+-- "comment-push" webhook trigger posts to the send-push edge function (v8+),
+-- and car_comments was added to the supabase_realtime publication.
+
+
+-- ============================================================
 -- COMMENTS + BUILD TIMELINE (2026-07-09)
 -- ============================================================
 

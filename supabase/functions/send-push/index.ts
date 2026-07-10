@@ -33,26 +33,41 @@ Deno.serve(async (req) => {
     const { data: car } = await admin.from("cars").select("make,model").eq("id", car_id).single();
     if (car) carName = [car.make, car.model].filter(Boolean).join(" ") || carName;
 
-    // Decide who to notify: owner on a new request, requester on a reply.
+    // Decide who to notify.
     let targetUserId: string | null = null;
     let title = "";
     let body = "";
-    const isReply = payload.type === "UPDATE" && response && response !== old.response;
-    const isReject = payload.type === "UPDATE" && rejected && !old.rejected;
+    let url = "callouts.html";
 
-    if (isReply) {
-      targetUserId = requester_id;
-      title = "Callout reply 🏁";
-      body = `The owner replied about your ${carName}: “${String(response).slice(0, 80)}”`;
-    } else if (isReject) {
-      targetUserId = requester_id;
-      title = "Callout declined";
-      body = `The owner declined your callout on ${carName}`;
-    } else if (payload.type === "INSERT" || !payload.type) {
-      targetUserId = owner_id;
-      title = "New callout request 🏁";
-      body = `${requester_email ?? "Someone"} wants a callout on your ${carName}` +
-        (message ? ` — “${String(message).slice(0, 80)}”` : "");
+    if (payload.table === "car_comments") {
+      // New comment → notify the car's owner (but never about their own comment)
+      if (payload.type !== "INSERT" && payload.type) return new Response("ignored", { status: 200 });
+      if (!record.owner_id || record.owner_id === record.user_id) {
+        return new Response("nothing to send", { status: 200 });
+      }
+      targetUserId = record.owner_id;
+      title = "New comment 💬";
+      body = `${record.author ?? "Someone"} commented on your ${carName}: “${String(record.body ?? "").slice(0, 80)}”`;
+      url = `car.html?id=${car_id}`;
+    } else {
+      // Callout requests (original behaviour)
+      const isReply = payload.type === "UPDATE" && response && response !== old.response;
+      const isReject = payload.type === "UPDATE" && rejected && !old.rejected;
+
+      if (isReply) {
+        targetUserId = requester_id;
+        title = "Callout reply 🏁";
+        body = `The owner replied about your ${carName}: “${String(response).slice(0, 80)}”`;
+      } else if (isReject) {
+        targetUserId = requester_id;
+        title = "Callout declined";
+        body = `The owner declined your callout on ${carName}`;
+      } else if (payload.type === "INSERT" || !payload.type) {
+        targetUserId = owner_id;
+        title = "New callout request 🏁";
+        body = `${requester_email ?? "Someone"} wants a callout on your ${carName}` +
+          (message ? ` — “${String(message).slice(0, 80)}”` : "");
+      }
     }
     if (!targetUserId) return new Response("nothing to send", { status: 200 });
 
@@ -62,7 +77,7 @@ Deno.serve(async (req) => {
       .eq("user_id", targetUserId);
     if (!subs || subs.length === 0) return new Response("no subs", { status: 200 });
 
-    const notification = JSON.stringify({ title, body, url: "callouts.html" });
+    const notification = JSON.stringify({ title, body, url });
 
     await Promise.all(subs.map(async (s) => {
       try {

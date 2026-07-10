@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity – The Garage</title>
+    <meta name="description" content="What the crew has been up to — new builds, updates and comments.">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d0d0f">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="bg.js"></script>
+
+<nav>
+  <div class="nav-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+    <a href="index.html">The <span style="color:var(--accent)">Garage</span></a>
+  </div>
+  <div class="nav-actions">
+    <a href="index.html" class="btn btn-ghost">← All Cars</a>
+  </div>
+</nav>
+
+<main style="max-width:720px">
+  <h2 class="section-title" style="margin-top:1.5rem">Crew Activity</h2>
+  <div class="detail-card" id="feed"><p class="dim-note">Loading…</p></div>
+</main>
+
+<footer>
+  <div class="footer-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+    The <span>Garage</span>
+  </div>
+  <div class="footer-links">
+    <a href="index.html">Garage</a>
+    <a href="leaderboard.html">Leaderboard</a>
+    <a href="compare.html">Compare</a>
+    <a href="activity.html">Activity</a>
+    <a href="https://dragy.pages.dev" target="_blank" rel="noopener">Dragy</a>
+  </div>
+  <p>Built by the crew, for the crew. Every build has a story.</p>
+</footer>
+
+<script src="app.js"></script>
+<script src="auth.js"></script>
+<script src="push.js"></script>
+<script>
+  async function init() {
+    initAuth();
+    const [cars, comments, updates] = await Promise.all([
+      getCars(),
+      sb().from('car_comments').select('author,body,car_id,created_at').order('created_at', { ascending: false }).limit(20).then(r => r.data || []),
+      sb().from('car_updates').select('title,car_id,created_at').order('created_at', { ascending: false }).limit(20).then(r => r.data || []),
+    ]);
+
+    const names = {};
+    cars.forEach(c => {
+      names[c.id] = `${c.year ? c.year + ' ' : ''}${c.make || ''} ${c.model || ''}`.trim() || 'a build';
+    });
+
+    const items = [];
+    comments.forEach(c => items.push({
+      t: new Date(c.created_at).getTime(),
+      icon: '💬',
+      html: `<strong>${escapeHtml(c.author || 'Someone')}</strong> commented on <a href="car.html?id=${c.car_id}">${escapeHtml(names[c.car_id] || 'a build')}</a>: <span class="feed-quote">“${escapeHtml(String(c.body).slice(0, 90))}”</span>`,
+      when: c.created_at,
+    }));
+    updates.forEach(u => items.push({
+      t: new Date(u.created_at).getTime(),
+      icon: '🔧',
+      html: `Build update on <a href="car.html?id=${u.car_id}">${escapeHtml(names[u.car_id] || 'a build')}</a>: <strong>${escapeHtml(u.title)}</strong>`,
+      when: u.created_at,
+    }));
+    cars.slice(0, 8).forEach(c => {
+      if (!c.updated_at) return;
+      items.push({
+        t: c.updated_at,
+        icon: '🏁',
+        html: `<a href="car.html?id=${c.id}">${escapeHtml(names[c.id])}</a>${c.owner ? ` by <strong>${escapeHtml(c.owner)}</strong>` : ''} was added or updated`,
+        when: new Date(c.updated_at).toISOString(),
+      });
+    });
+
+    items.sort((x, y) => y.t - x.t);
+    const top = items.slice(0, 30);
+
+    document.getElementById('feed').innerHTML = top.length ? top.map(i => `
+      <div class="feed-item">
+        <span class="feed-icon">${i.icon}</span>
+        <div class="feed-main">
+          <div class="feed-text">${i.html}</div>
+          <div class="feed-time">${fmtDate(i.when, true)}</div>
+        </div>
+      </div>`).join('') : '<p class="dim-note">Nothing yet — go make some noise.</p>';
+  }
+
+  init();
+</script>
+</body>
+</html>

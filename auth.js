@@ -68,10 +68,22 @@ async function setupCalloutNotifications() {
         updateCalloutBadge();
       }
     })
+    // Someone commented on one of my builds
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'car_comments',
+      filter: 'owner_id=eq.' + _currentUser.id,
+    }, payload => {
+      if (payload.new?.user_id === _currentUser.id) return; // my own comment
+      showCalloutPopup(
+        'New comment 💬',
+        `${payload.new?.author || 'Someone'} commented on your build`,
+        `car.html?id=${payload.new?.car_id}`
+      );
+    })
     .subscribe();
 }
 
-function showCalloutPopup(title, sub) {
+function showCalloutPopup(title, sub, url) {
   const el = document.createElement('div');
   el.className = 'callout-popup';
   el.innerHTML = `
@@ -82,7 +94,7 @@ function showCalloutPopup(title, sub) {
       <div class="callout-popup-title">${escapeHtml(title)}</div>
       <div class="callout-popup-sub">${escapeHtml(sub || '')}</div>
     </div>`;
-  el.onclick = () => { location.href = 'callouts.html'; };
+  el.onclick = () => { location.href = url || 'callouts.html'; };
   document.body.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 6500);
@@ -109,6 +121,8 @@ function renderNavAuth(user) {
         <div class="user-menu-panel" id="user-menu-panel">
           <div class="user-menu-email">${escapeHtml(user.email)}</div>
           <a class="user-menu-item" href="profile.html?id=${user.id}">My Garage</a>
+          <a class="user-menu-item" href="activity.html">Activity</a>
+          <a class="user-menu-item" href="compare.html">Compare builds</a>
           <a class="user-menu-item" href="callouts.html">Callouts <span class="menu-count" id="callout-badge"></span></a>
           <button class="user-menu-item" id="push-toggle" onclick="handlePushToggle()">Enable notifications</button>
           ${adminItem}
