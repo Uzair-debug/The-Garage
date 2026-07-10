@@ -1,306 +1,318 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Garage — Every build has a story</title>
-  <meta name="description" content="The Garage is our crew's corner of the internet — builds, mods and the stories behind every car. Daily drivers to full-send track weapons.">
-  <link rel="canonical" href="https://ourgarage.pages.dev/">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="The Garage">
-  <meta property="og:title" content="The Garage — Every build has a story">
-  <meta property="og:description" content="Builds, mods and the stories behind every car in the crew.">
-  <meta property="og:url" content="https://ourgarage.pages.dev/">
-  <meta property="og:image" content="https://ourgarage.pages.dev/og.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d0d0f">
-  <link rel="apple-touch-icon" href="icon.svg">
-  <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
-</head>
-<body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="bg.js"></script>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>The Garage — Every build has a story</title>
+        <meta name="description" content="The Garage is our crew's corner of the internet — builds, mods and the stories behind every car. Daily drivers to full-send track weapons.">
+        <link rel="canonical" href="https://ourgarage.pages.dev/">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="The Garage">
+        <meta property="og:title" content="The Garage — Every build has a story">
+        <meta property="og:description" content="Builds, mods and the stories behind every car in the crew.">
+        <meta property="og:url" content="https://ourgarage.pages.dev/">
+        <meta property="og:image" content="https://ourgarage.pages.dev/og.png">
+        <meta name="twitter:card" content="summary_large_image">
+        <link rel="icon" href="icon.svg" type="image/svg+xml">
+        <link rel="stylesheet" href="style.css">
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#0d0d0f">
+        <link rel="apple-touch-icon" href="icon.svg">
+        <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="bg.js"></script>
 
-<nav>
-  <div class="nav-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
-    The <span>Garage</span>
-  </div>
-  <div class="nav-actions">
-    <a href="https://dragy.pages.dev" target="_blank" rel="noopener" class="btn" title="Dragy 2.0 — GPS performance timer">
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="13" r="7"/><path d="M12 10v3"/><path d="M10 3h4"/></svg>
-      <span class="dragy-txt">Dragy</span>
-    </a>
-    <a href="add.html" class="btn btn-primary">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-      Add Car
-    </a>
-  </div>
-</nav>
+        <nav>
+            <div class="nav-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+                The
+                <span>Garage</span>
+            </div>
+            <div class="nav-actions">
+                <a href="https://dragy.pages.dev" target="_blank" rel="noopener" class="btn" title="Dragy 2.0 — GPS performance timer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="13" r="7"/><path d="M12 10v3"/><path d="M10 3h4"/></svg>
+                    <span class="dragy-txt">Dragy</span>
+                </a>
+                <a href="add.html" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                    Add Car
+                </a>
+            </div>
+        </nav>
 
-<main>
-  <div class="hero-bio">
-    <div class="hero-bio-inner">
-      <div class="hero-bio-text">
-        <div class="hero-tag">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
-          The Garage
-        </div>
-        <h1>Built different.<br><span>Every single one.</span></h1>
-        <p>This is our corner of the internet — a place to show off the builds, the mods, and the stories behind every car in the crew. Whether it's a daily driver with a few tasteful touches or a full-send track weapon, it belongs here.</p>
-        <p class="hero-sub">Got a car worth showing? Add it to the garage and let it speak for itself.</p>
-        <div class="hero-actions">
-          <a href="add.html" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-            Add your car
-          </a>
-          <a href="#garage" class="btn">Browse the garage</a>
-          <a href="leaderboard.html" class="btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1 -10 0z"/><path d="M7 6h-3a2 2 0 0 0 0 4h3"/><path d="M17 6h3a2 2 0 0 1 0 4h-3"/></svg>
-            Leaderboard
-          </a>
-        </div>
-      </div>
-      <div class="hero-bio-stats">
-        <div class="stat-pill"><span id="stat-cars">—</span><label>Cars</label></div>
-        <div class="stat-pill"><span id="stat-mods">—</span><label>Mods</label></div>
-        <div class="stat-pill"><span id="stat-owners">—</span><label>Owners</label></div>
-      </div>
-    </div>
-  </div>
+        <main>
+            <div class="hero-bio">
+                <div class="hero-bio-inner">
+                    <div class="hero-bio-text">
+                        <div class="hero-tag">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+                            The Garage
+                        </div>
+                        <h1>Built different.<br><span>Every single one.</span>
+                        </h1>
+                        <p>This is our corner of the internet — a place to show off the builds, the mods, and the stories behind every car in the crew. Whether it's a daily driver with a few tasteful touches or a full-send track weapon, it belongs here.</p>
+                        <p class="hero-sub">Got a car worth showing? Add it to the garage and let it speak for itself.</p>
+                        <div class="hero-actions">
+                            <a href="add.html" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                                Add your car
+                            </a>
+                            <a href="#garage" class="btn">Browse the garage</a>
+                            <a href="leaderboard.html" class="btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1 -10 0z"/><path d="M7 6h-3a2 2 0 0 0 0 4h3"/><path d="M17 6h3a2 2 0 0 1 0 4h-3"/></svg>
+                                Leaderboard
+                            </a>
+                        </div>
+                    </div>
+                    <div class="hero-bio-stats">
+                        <div class="stat-pill">
+                            <span id="stat-cars">—</span>
+                            <label>Cars</label>
+                        </div>
+                        <div class="stat-pill">
+                            <span id="stat-mods">—</span>
+                            <label>Mods</label>
+                        </div>
+                        <div class="stat-pill">
+                            <span id="stat-owners">—</span>
+                            <label>Owners</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-  <div id="spotlight-wrap"></div>
+            <div id="spotlight-wrap"></div>
 
-  <div id="ticker-wrap"></div>
+            <div id="ticker-wrap"></div>
 
-  <!-- Search + Sort -->
-  <h2 class="section-title" id="garage">The Lineup</h2>
-  <div class="garage-toolbar">
-    <div class="search-wrap">
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
-      <input type="text" id="search" placeholder="Search by make, model, owner…" oninput="applyFilters()">
-    </div>
-    <div class="toolbar-right">
-      <select id="filter-status" onchange="applyFilters()" aria-label="Filter by status">
-        <option value="">All statuses</option>
-        <option>Daily Driver</option>
-        <option>Track Build</option>
-        <option>Project Car</option>
-        <option>Stored</option>
-      </select>
-      <select id="sort" onchange="applyFilters()" aria-label="Sort cars">
-        <option value="newest">Newest</option>
-        <option value="mods">Most mods</option>
-        <option value="likes">Most liked</option>
-        <option value="az">Make A–Z</option>
-      </select>
-      <span id="car-count" class="list-heading" style="margin:0;white-space:nowrap">—</span>
-    </div>
-  </div>
+            <!-- Search + Sort -->
+            <h2 class="section-title" id="garage">The Lineup</h2>
+            <div class="garage-toolbar">
+                <div class="search-wrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+                    <input type="text" id="search" placeholder="Search by make, model, owner…" oninput="applyFilters()">
+                </div>
+                <div class="toolbar-right">
+                    <select id="filter-status" onchange="applyFilters()" aria-label="Filter by status">
+                        <option value="">All statuses</option>
+                        <option>Daily Driver</option>
+                        <option>Track Build</option>
+                        <option>Project Car</option>
+                        <option>Stored</option>
+                    </select>
+                    <select id="sort" onchange="applyFilters()" aria-label="Sort cars">
+                        <option value="newest">Newest</option>
+                        <option value="mods">Most mods</option>
+                        <option value="likes">Most liked</option>
+                        <option value="az">Make A–Z</option>
+                    </select>
+                    <span id="car-count" class="list-heading" style="margin:0;white-space:nowrap">—</span>
+                </div>
+            </div>
 
-  <div class="car-grid" id="car-grid"></div>
-</main>
+            <div class="car-grid" id="car-grid"></div>
+        </main>
 
-<footer>
-  <div class="footer-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
-    The <span>Garage</span>
-  </div>
-  <p>Built by the crew, for the crew. Every build has a story.</p>
-</footer>
+        <footer>
+            <div class="footer-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+                The
+                <span>Garage</span>
+            </div>
+            <p>Built by the crew, for the crew. Every build has a story.</p>
+        </footer>
 
-<script src="app.js"></script>
-<script src="auth.js"></script>
-<script src="push.js"></script>
-<script>
-  let allCars = [];
-
-  function renderSkeletons(n = 6) {
-    document.getElementById('car-grid').innerHTML = Array.from({ length: n }).map(() => `
-      <div class="skeleton-card">
-        <div class="skeleton-img skeleton"></div>
-        <div class="skeleton-body">
-          <div class="skeleton-line skeleton"></div>
-          <div class="skeleton-line sm skeleton"></div>
-          <div class="skeleton-line badges skeleton"></div>
-        </div>
-      </div>`).join('');
-  }
-
-  // Count-up animation for the hero stats
-  function countUp(el, target) {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches || target <= 0) {
-      el.textContent = target;
-      return;
-    }
-    const dur = 700;
-    const start = performance.now();
-    (function tick(now) {
-      const t = Math.min(1, (now - start) / dur);
-      el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
-      if (t < 1) requestAnimationFrame(tick);
-    })(start);
-  }
-
-  function renderTicker(cars) {
-    const items = [];
-    [...cars].sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0)).slice(0, 4)
-      .forEach(c => items.push({ tag: 'new', label: 'New', car: c }));
-    [...cars].filter(c => (c.likes || 0) > 0).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 4)
-      .forEach(c => { if (!items.some(i => i.car.id === c.id)) items.push({ tag: 'hot', label: 'Hot', car: c }); });
-    if (items.length < 3) return;
-
-    const itemHtml = items.map(({ tag, label, car }) => `
-      <a class="ticker-item" href="car.html?id=${car.id}">
-        <span class="tick-tag ${tag}">${label}</span>
-        ${car.year ? escapeHtml(car.year) + ' ' : ''}${escapeHtml(car.make || '')} ${escapeHtml(car.model || '')}
-        ${car.owner ? `· ${escapeHtml(car.owner)}` : ''}
-        ${tag === 'hot' ? `<span class="reps">${car.likes} reps</span>` : ''}
-      </a>`).join('');
-
-    document.getElementById('ticker-wrap').innerHTML = `
-      <div class="ticker" aria-label="Latest garage activity">
-        <div class="ticker-track">${itemHtml}${itemHtml}</div>
-      </div>`;
-  }
-
-  // Sample the spotlight photo's dominant colour and glow with it
-  function applySpotlightGlow(url) {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        const c = document.createElement('canvas');
-        c.width = c.height = 10;
-        const x = c.getContext('2d');
-        x.drawImage(img, 0, 0, 10, 10);
-        const d = x.getImageData(0, 0, 10, 10).data;
-        let r = 0, g = 0, b = 0;
-        for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
-        const n = d.length / 4;
-        r /= n; g /= n; b /= n;
-        const k = 190 / Math.max(r, g, b, 1); // lift towards a vivid glow
-        r = Math.min(255, Math.round(r * k));
-        g = Math.min(255, Math.round(g * k));
-        b = Math.min(255, Math.round(b * k));
-        const el = document.querySelector('.spotlight');
-        if (el) el.style.boxShadow = `0 24px 80px -20px rgba(${r},${g},${b},0.4)`;
-      } catch (e) { /* non-CORS image: keep default */ }
-    };
-    img.src = url;
-  }
-
-  function renderSpotlight(cars) {
-    const withPhoto = cars.filter(c => c.photos && c.photos.length && (c.likes || 0) > 0);
-    if (!withPhoto.length) return;
-    const top = withPhoto.reduce((a, b) => (b.likes || 0) > (a.likes || 0) ? b : a);
-    const name = `${top.year ? escapeHtml(top.year) + ' ' : ''}${escapeHtml(top.make || '')} ${escapeHtml(top.model || '')}`.trim();
-    document.getElementById('spotlight-wrap').innerHTML = `
-      <h2 class="section-title">Build of the Garage</h2>
-      <a class="spotlight" href="car.html?id=${top.id}">
-        <img class="spotlight-img" src="${encodeURI(top.photos[0])}" alt="${name}">
-        <div class="spotlight-body">
-          <span class="spotlight-tag">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572z"/></svg>
-            Most Repped
-          </span>
-          <div class="spotlight-title">${name}</div>
-          <div class="spotlight-sub">
-            ${top.owner ? `<span>${escapeHtml(top.owner)}</span>` : ''}
-            <span class="spotlight-reps">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572z"/></svg>
-              ${top.likes} rep${top.likes === 1 ? '' : 's'}
-            </span>
-            ${top.mods?.length ? `<span>${top.mods.length} mods</span>` : ''}
-          </div>
-          <span class="btn btn-primary">View the build</span>
-        </div>
-      </a>`;
-    applySpotlightGlow(top.photos[0]);
-  }
-
-  async function init() {
-    renderSkeletons();
-    [allCars] = await Promise.all([getCars(), initLikes()]);
-
-    countUp(document.getElementById('stat-cars'), allCars.length);
-    countUp(document.getElementById('stat-mods'), allCars.reduce((n, c) => n + (c.mods ? c.mods.length : 0), 0));
-    const owners = new Set(allCars.map(c => c.owner).filter(Boolean));
-    countUp(document.getElementById('stat-owners'), owners.size);
-
-    renderSpotlight(allCars);
-    renderTicker(allCars);
-    applyFilters();
-  }
-
-  function applyFilters() {
-    const q = (document.getElementById('search').value || '').toLowerCase();
-    const statusFilter = document.getElementById('filter-status').value;
-    const sort = document.getElementById('sort').value;
-
-    let cars = allCars.filter(car => {
-      const matchQ = !q || [car.make, car.model, car.owner, car.year].some(v => v && v.toLowerCase().includes(q));
-      const matchStatus = !statusFilter || car.status === statusFilter;
-      return matchQ && matchStatus;
-    });
-
-    if (sort === 'mods') cars.sort((a, b) => (b.mods?.length || 0) - (a.mods?.length || 0));
-    else if (sort === 'likes') cars.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-    else if (sort === 'az') cars.sort((a, b) => (a.make || '').localeCompare(b.make || ''));
-    else cars.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
-
-    renderGrid(cars);
-  }
-
-  function renderGrid(cars) {
-    const grid = document.getElementById('car-grid');
-    const count = document.getElementById('car-count');
-    count.textContent = cars.length === 1 ? '1 Car' : `${cars.length} Cars`;
-
-    if (cars.length === 0) {
-      grid.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">${carIcon()}</div>
-          <h3>No cars found</h3>
-          <p>Try a different search or be the first to add a build.</p>
-          <br><a href="add.html" class="btn btn-primary" style="margin-top:0.5rem">Add a Car</a>
-        </div>`;
-      return;
-    }
-
-    grid.innerHTML = cars.map(car => renderCarCard(car)).join('');
-    initCardExtras(grid);
-  }
-
-  // Mouse parallax: hero layers + background canvas drift at different depths
-  (function () {
-    if (!matchMedia('(hover: hover)').matches ||
-        matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const text = document.querySelector('.hero-bio-text');
-    const stats = document.querySelector('.hero-bio-stats');
-    let raf = null;
-    window.addEventListener('mousemove', e => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = null;
-        const dx = e.clientX / window.innerWidth - 0.5;
-        const dy = e.clientY / window.innerHeight - 0.5;
-        if (text) text.style.transform = `translate(${dx * -7}px, ${dy * -4}px)`;
-        if (stats) stats.style.transform = `translate(${dx * 12}px, ${dy * 8}px)`;
-        const bgc = document.getElementById('bg-canvas');
-        if (bgc) bgc.style.transform = `translate(${dx * -20}px, ${dy * -14}px) scale(1.03)`;
-      });
-    }, { passive: true });
-  })();
-
-  init();
-  initAuth();
-</script>
-</body>
-</html>
+        <script src="app.js"></script>
+        <script src="auth.js"></script>
+        <script src="push.js"></script>
+        <script>
+            let allCars = [];
+            
+              function renderSkeletons(n = 6) {
+                document.getElementById('car-grid').innerHTML = Array.from({ length: n }).map(() => `
+                  <div class="skeleton-card">
+                    <div class="skeleton-img skeleton"></div>
+                    <div class="skeleton-body">
+                      <div class="skeleton-line skeleton"></div>
+                      <div class="skeleton-line sm skeleton"></div>
+                      <div class="skeleton-line badges skeleton"></div>
+                    </div>
+                  </div>`).join('');
+              }
+            
+              // Count-up animation for the hero stats
+              function countUp(el, target) {
+                if (matchMedia('(prefers-reduced-motion: reduce)').matches || target <= 0) {
+                  el.textContent = target;
+                  return;
+                }
+                const dur = 700;
+                const start = performance.now();
+                (function tick(now) {
+                  const t = Math.min(1, (now - start) / dur);
+                  el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
+                  if (t < 1) requestAnimationFrame(tick);
+                })(start);
+              }
+            
+              function renderTicker(cars) {
+                const items = [];
+                [...cars].sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0)).slice(0, 4)
+                  .forEach(c => items.push({ tag: 'new', label: 'New', car: c }));
+                [...cars].filter(c => (c.likes || 0) > 0).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 4)
+                  .forEach(c => { if (!items.some(i => i.car.id === c.id)) items.push({ tag: 'hot', label: 'Hot', car: c }); });
+                if (items.length < 3) return;
+            
+                const itemHtml = items.map(({ tag, label, car }) => `
+                  <a class="ticker-item" href="car.html?id=${car.id}">
+                    <span class="tick-tag ${tag}">${label}</span>
+                    ${car.year ? escapeHtml(car.year) + ' ' : ''}${escapeHtml(car.make || '')} ${escapeHtml(car.model || '')}
+                    ${car.owner ? `· ${escapeHtml(car.owner)}` : ''}
+                    ${tag === 'hot' ? `<span class="reps">${car.likes} reps</span>` : ''}
+                  </a>`).join('');
+            
+                document.getElementById('ticker-wrap').innerHTML = `
+                  <div class="ticker" aria-label="Latest garage activity">
+                    <div class="ticker-track">${itemHtml}${itemHtml}</div>
+                  </div>`;
+              }
+            
+              // Sample the spotlight photo's dominant colour and glow with it
+              function applySpotlightGlow(url) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                  try {
+                    const c = document.createElement('canvas');
+                    c.width = c.height = 10;
+                    const x = c.getContext('2d');
+                    x.drawImage(img, 0, 0, 10, 10);
+                    const d = x.getImageData(0, 0, 10, 10).data;
+                    let r = 0, g = 0, b = 0;
+                    for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
+                    const n = d.length / 4;
+                    r /= n; g /= n; b /= n;
+                    const k = 190 / Math.max(r, g, b, 1); // lift towards a vivid glow
+                    r = Math.min(255, Math.round(r * k));
+                    g = Math.min(255, Math.round(g * k));
+                    b = Math.min(255, Math.round(b * k));
+                    const el = document.querySelector('.spotlight');
+                    if (el) el.style.boxShadow = `0 24px 80px -20px rgba(${r},${g},${b},0.4)`;
+                  } catch (e) { /* non-CORS image: keep default */ }
+                };
+                img.src = url;
+              }
+            
+              function renderSpotlight(cars) {
+                const withPhoto = cars.filter(c => c.photos && c.photos.length && (c.likes || 0) > 0);
+                if (!withPhoto.length) return;
+                const top = withPhoto.reduce((a, b) => (b.likes || 0) > (a.likes || 0) ? b : a);
+                const name = `${top.year ? escapeHtml(top.year) + ' ' : ''}${escapeHtml(top.make || '')} ${escapeHtml(top.model || '')}`.trim();
+                document.getElementById('spotlight-wrap').innerHTML = `
+                  <h2 class="section-title">Build of the Garage</h2>
+                  <a class="spotlight" href="car.html?id=${top.id}">
+                    <img class="spotlight-img" src="${encodeURI(top.photos[0])}" alt="${name}">
+                    <div class="spotlight-body">
+                      <span class="spotlight-tag">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572z"/></svg>
+                        Most Repped
+                      </span>
+                      <div class="spotlight-title">${name}</div>
+                      <div class="spotlight-sub">
+                        ${top.owner ? `<span>${escapeHtml(top.owner)}</span>` : ''}
+                        <span class="spotlight-reps">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572z"/></svg>
+                          ${top.likes} rep${top.likes === 1 ? '' : 's'}
+                        </span>
+                        ${top.mods?.length ? `<span>${top.mods.length} mods</span>` : ''}
+                      </div>
+                      <span class="btn btn-primary">View the build</span>
+                    </div>
+                  </a>`;
+                applySpotlightGlow(top.photos[0]);
+              }
+            
+              async function init() {
+                renderSkeletons();
+                [allCars] = await Promise.all([getCars(), initLikes()]);
+            
+                countUp(document.getElementById('stat-cars'), allCars.length);
+                countUp(document.getElementById('stat-mods'), allCars.reduce((n, c) => n + (c.mods ? c.mods.length : 0), 0));
+                const owners = new Set(allCars.map(c => c.owner).filter(Boolean));
+                countUp(document.getElementById('stat-owners'), owners.size);
+            
+                renderSpotlight(allCars);
+                renderTicker(allCars);
+                applyFilters();
+              }
+            
+              function applyFilters() {
+                const q = (document.getElementById('search').value || '').toLowerCase();
+                const statusFilter = document.getElementById('filter-status').value;
+                const sort = document.getElementById('sort').value;
+            
+                let cars = allCars.filter(car => {
+                  const matchQ = !q || [car.make, car.model, car.owner, car.year].some(v => v && v.toLowerCase().includes(q));
+                  const matchStatus = !statusFilter || car.status === statusFilter;
+                  return matchQ && matchStatus;
+                });
+            
+                if (sort === 'mods') cars.sort((a, b) => (b.mods?.length || 0) - (a.mods?.length || 0));
+                else if (sort === 'likes') cars.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+                else if (sort === 'az') cars.sort((a, b) => (a.make || '').localeCompare(b.make || ''));
+                else cars.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+            
+                renderGrid(cars);
+              }
+            
+              function renderGrid(cars) {
+                const grid = document.getElementById('car-grid');
+                const count = document.getElementById('car-count');
+                count.textContent = cars.length === 1 ? '1 Car' : `${cars.length} Cars`;
+            
+                if (cars.length === 0) {
+                  grid.innerHTML = `
+                    <div class="empty-state">
+                      <div class="empty-icon">${carIcon()}</div>
+                      <h3>No cars found</h3>
+                      <p>Try a different search or be the first to add a build.</p>
+                      <br><a href="add.html" class="btn btn-primary" style="margin-top:0.5rem">Add a Car</a>
+                    </div>`;
+                  return;
+                }
+            
+                grid.innerHTML = cars.map(car => renderCarCard(car)).join('');
+                initCardExtras(grid);
+              }
+            
+              // Mouse parallax: hero layers + background canvas drift at different depths
+              (function () {
+                if (!matchMedia('(hover: hover)').matches ||
+                    matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                const text = document.querySelector('.hero-bio-text');
+                const stats = document.querySelector('.hero-bio-stats');
+                let raf = null;
+                window.addEventListener('mousemove', e => {
+                  if (raf) return;
+                  raf = requestAnimationFrame(() => {
+                    raf = null;
+                    const dx = e.clientX / window.innerWidth - 0.5;
+                    const dy = e.clientY / window.innerHeight - 0.5;
+                    if (text) text.style.transform = `translate(${dx * -7}px, ${dy * -4}px)`;
+                    if (stats) stats.style.transform = `translate(${dx * 12}px, ${dy * 8}px)`;
+                    const bgc = document.getElementById('bg-canvas');
+                    if (bgc) bgc.style.transform = `translate(${dx * -20}px, ${dy * -14}px) scale(1.03)`;
+                  });
+                }, { passive: true });
+              })();
+            
+              init();
+              initAuth();
+            </script>
+            </body>
+            </html>

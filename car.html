@@ -1,511 +1,513 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Car – The Garage</title>
-  <meta name="description" content="Build details, specs and mods — The Garage.">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d0d0f">
-  <link rel="apple-touch-icon" href="icon.svg">
-  <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
-</head>
-<body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="bg.js"></script>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Car – The Garage</title>
+        <meta name="description" content="Build details, specs and mods — The Garage.">
+        <link rel="icon" href="icon.svg" type="image/svg+xml">
+        <link rel="stylesheet" href="style.css">
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#0d0d0f">
+        <link rel="apple-touch-icon" href="icon.svg">
+        <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="bg.js"></script>
 
-<nav>
-  <div class="nav-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
-    <a href="index.html">The <span style="color:var(--accent)">Garage</span></a>
-  </div>
-  <div class="nav-actions">
-    <a href="index.html" class="btn btn-ghost">← All Cars</a>
-  </div>
-</nav>
-
-<div class="car-detail" id="car-detail">
-  <p class="muted-center">Loading…</p>
-</div>
-
-<script src="app.js"></script>
-<script src="auth.js"></script>
-<script src="push.js"></script>
-<script>
-  async function init() {
-    initAuth();
-    const params = new URLSearchParams(location.search);
-    const id = params.get('id');
-    const [car, currentUser] = await Promise.all([
-      id ? getCar(id) : null,
-      getCurrentUser(),
-      initLikes(),
-    ]);
-
-    if (!car) {
-      document.getElementById('car-detail').innerHTML = `
-        <div style="text-align:center;padding:4rem 0;color:var(--text-muted)">
-          <p style="font-size:1.1rem;margin-bottom:1rem">Car not found.</p>
-          <a href="index.html" class="btn">Back to Garage</a>
-        </div>`;
-      return;
-    }
-
-    // canManage = owner OR admin (edit/delete). isActualOwner = the real owner only.
-    const canManage = !!currentUser && (car.user_id === currentUser.id || isAdmin(currentUser));
-    const isActualOwner = !!currentUser && car.user_id === currentUser.id;
-    document.title = `${car.year ? car.year + ' ' : ''}${car.make} ${car.model} – The Garage`;
-    render(car, canManage, isActualOwner);
-  }
-
-  function render(car, canManage, isActualOwner) {
-    const title = escapeHtml([car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car');
-    const meta = escapeHtml([car.year, car.drivetrain, car.colour].filter(Boolean).join(' · '));
-
-    // Status accent theming for the whole page
-    const statusMeta = STATUS_META[car.status];
-    const accent = statusMeta ? statusMeta.color : '#e63030';
-    const detailRoot = document.getElementById('car-detail');
-    detailRoot.style.setProperty('--page-accent', accent);
-
-    const statusBadge = statusMeta
-      ? `<span class="status-badge" style="background:${statusMeta.bg};color:${statusMeta.color};border:1px solid ${statusMeta.color}44">${escapeHtml(car.status)}</span>`
-      : '';
-
-    // Spec chips shown on the hero
-    const chip = (text, icon) => `<span class="hero-chip">${icon || ''}${escapeHtml(text)}</span>`;
-    const chips = [
-      car.year ? chip(car.year) : '',
-      car.engine ? chip(car.engine) : '',
-      car.power ? chip(car.power, catIcon('Engine', 13)) : '',
-      car.drivetrain ? chip(car.drivetrain, catIcon('Wheels', 13)) : '',
-      car.colour ? chip(car.colour, catIcon('Colour', 13)) : '',
-    ].join('');
-
-    // Hero / gallery
-    let galleryHtml = '';
-    let headerHtml = '';
-    if (car.photos && car.photos.length) {
-      const thumbs = car.photos.map((src, i) => `
-        <div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="setPhoto(${i})">
-          <img src="${encodeURI(src)}" alt="Photo ${i + 1}">
-        </div>`).join('');
-      galleryHtml = `
-        <div class="photo-gallery">
-          <div class="car-hero" style="--tint:${accent}2e" onclick="openLightbox()">
-            <img id="gallery-main-img" src="${encodeURI(car.photos[0])}" alt="${title}">
-            <div class="car-hero-content">
-              ${statusBadge}
-              <h1 class="car-hero-title">${title}</h1>
-              <div class="hero-chips">${chips}</div>
+        <nav>
+            <div class="nav-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+                <a href="index.html">The
+                    <span style="color:var(--accent)">Garage</span>
+                </a>
             </div>
-          </div>
-          ${car.photos.length > 1 ? `<div class="gallery-thumbs">${thumbs}</div>` : ''}
-        </div>`;
-    } else {
-      headerHtml = `
-        <div class="car-detail-title" style="margin-bottom:1rem">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
-            <h1 style="margin:0">${title}</h1>
-            ${statusBadge}
-          </div>
-          ${meta ? `<p class="year-make">${meta}</p>` : ''}
-        </div>`;
-      galleryHtml = `
-        <div class="photo-gallery">
-          <div class="gallery-main">
-            <div class="no-photo"><span>${carIcon()}</span><p>No photos yet</p></div>
-          </div>
-        </div>`;
-    }
-
-    // Specs
-    const specRows = [
-      ['Make', car.make], ['Model', car.model], ['Year', car.year],
-      ['Engine', car.engine], ['Power', car.power], ['Drivetrain', car.drivetrain],
-      ['Colour', car.colour], ['Status', car.status],
-    ].filter(([, v]) => v);
-
-    // Owner row links to profile
-    const ownerRow = car.owner
-      ? `<div class="spec-row"><span class="spec-label">Owner</span><span class="spec-value">${
-          car.user_id
-            ? `<a class="owner-link" href="profile.html?id=${car.user_id}" style="color:inherit">${escapeHtml(car.owner)}</a>`
-            : escapeHtml(car.owner)
-        }</span></div>`
-      : '';
-
-    const specsHtml = (specRows.length || ownerRow)
-      ? specRows.map(([k, v]) => `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${escapeHtml(v)}</span></div>`).join('') + ownerRow
-      : '<p style="color:var(--text-dim);font-size:0.85rem">No specs added.</p>';
-
-    // Mods
-    let modsHtml = '<p style="color:var(--text-dim);font-size:0.85rem">No mods listed.</p>';
-    if (car.mods && car.mods.length) {
-      const grouped = {};
-      car.mods.map(normalizeMod).forEach(m => { (grouped[m.cat] = grouped[m.cat] || []).push(m.name); });
-      modsHtml = Object.entries(grouped).map(([cat, names]) => {
-        const color = CAT_COLORS[cat] || CAT_COLORS.Other;
-        return `
-          <div class="mods-group">
-            <div class="mods-group-header">
-              <span class="mods-group-icon" style="color:${color}">${catIcon(cat, 15)}</span>${escapeHtml(cat)}
+            <div class="nav-actions">
+                <a href="index.html" class="btn btn-ghost">← All Cars</a>
             </div>
-            ${names.map(n => `
-              <div class="mod-detail-item">
-                <span class="mod-detail-dot" style="background:${color}"></span><span>${escapeHtml(n)}</span>
-              </div>`).join('')}
-          </div>`;
-      }).join('');
-    }
+        </nav>
 
-    // Like button
-    const liked = hasLiked(car.id);
-    const likeHtml = `
-      <button class="like-btn like-btn-lg ${liked ? 'liked' : ''}" id="like-btn" onclick="handleLike('${car.id}')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
-        <span id="like-count">${car.likes || 0}</span> ${car.likes === 1 ? 'rep' : 'reps'}
-      </button>`;
-
-    // Instagram
-    const igHandle = (car.instagram || '').replace(/[^A-Za-z0-9._]/g, '');
-    const igHtml = igHandle
-      ? `<a class="ig-link" href="https://instagram.com/${encodeURIComponent(igHandle)}" target="_blank" rel="noopener">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 4a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z"/><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M16.5 7.5l0 .01"/></svg>
-          @${escapeHtml(igHandle)}
-        </a>` : '';
-
-    document.getElementById('car-detail').innerHTML = `
-      ${headerHtml}
-      ${galleryHtml}
-
-      <div class="car-detail-header" style="margin:0.75rem 0 1.5rem">
-        <div class="car-detail-title">${igHtml}</div>
-        <div class="car-detail-actions">
-          ${likeHtml}
-          ${!isActualOwner ? `<button class="btn btn-primary" onclick="openCallout('${car.id}')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 8a3 3 0 0 1 0 6"/><path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"/><path d="M12 8h0l4.524 -3.77a0.9 .9 0 0 1 1.476 .692v12.156a0.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h8"/></svg>
-            Request Callout</button>` : ''}
-          ${canManage ? `<a href="add.html?id=${car.id}" class="btn">Edit</a>` : ''}
-          ${canManage ? `<button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>` : ''}
+        <div class="car-detail" id="car-detail">
+            <p class="muted-center">Loading…</p>
         </div>
-      </div>
 
-      <div class="detail-sections">
-        <div class="detail-card">
-          <h3>Specs</h3>
-          ${specsHtml}
-        </div>
-        <div class="detail-card">
-          <h3>Mods · ${car.mods ? car.mods.length : 0}</h3>
-          ${modsHtml}
-        </div>
-      </div>
-
-      <div class="detail-card" style="margin-bottom:1rem">
-        <h3>Build Timeline</h3>
-        <div id="timeline-list"><p class="dim-note">Loading…</p></div>
-        ${isActualOwner ? `
-        <div class="tl-form">
-          <input type="text" id="tl-title" maxlength="120" placeholder="What changed? e.g. Fitted coilovers">
-          <textarea id="tl-body" class="text-area" maxlength="1000" placeholder="Details (optional)" style="min-height:56px"></textarea>
-          <div class="tl-form-row">
-            <label class="btn" style="position:relative;overflow:hidden">
-              <input type="file" id="tl-photo" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-              <span id="tl-photo-label">Add photo</span>
-            </label>
-            <button class="btn btn-primary" id="tl-post" onclick="postUpdate('${car.id}')">Post update</button>
-          </div>
-        </div>` : ''}
-      </div>
-
-      <div class="detail-card">
-        <h3>Comments <span id="comment-count" class="count-chip"></span></h3>
-        <div id="comments-list"><p class="dim-note">Loading…</p></div>
-        <div id="comment-form"></div>
-      </div>`;
-
-    loadTimeline(car.id, canManage);
-    loadComments(car.id, canManage);
-    const tlPhoto = document.getElementById('tl-photo');
-    if (tlPhoto) tlPhoto.addEventListener('change', function () {
-      document.getElementById('tl-photo-label').textContent =
-        this.files.length ? '1 photo attached' : 'Add photo';
-    });
-
-    // store photos ref for gallery
-    window._photos = car.photos || [];
-  }
-
-  function setPhoto(idx) {
-    window._currentPhoto = idx;
-    const img = document.getElementById('gallery-main-img');
-    if (img) img.src = window._photos[idx];
-    document.querySelectorAll('.gallery-thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
-  }
-
-  // ─── Lightbox ──────────────────────────────────────────────────
-  function openLightbox() {
-    const photos = window._photos || [];
-    if (!photos.length || document.getElementById('lightbox')) return;
-    let idx = window._currentPhoto || 0;
-
-    const box = document.createElement('div');
-    box.id = 'lightbox';
-    box.className = 'lightbox';
-    const multi = photos.length > 1;
-    box.innerHTML = `
-      <button class="lightbox-close" title="Close (Esc)">&times;</button>
-      ${multi ? `<button class="lightbox-nav prev" title="Previous">&#8249;</button>` : ''}
-      <img id="lightbox-img" src="${encodeURI(photos[idx])}" alt="Photo">
-      ${multi ? `<button class="lightbox-nav next" title="Next">&#8250;</button>` : ''}
-      ${multi ? `<div class="lightbox-count"><span id="lightbox-count">${idx + 1}</span> / ${photos.length}</div>` : ''}`;
-    document.body.appendChild(box);
-    document.body.style.overflow = 'hidden';
-
-    const show = i => {
-      idx = (i + photos.length) % photos.length;
-      document.getElementById('lightbox-img').src = encodeURI(photos[idx]);
-      const c = document.getElementById('lightbox-count');
-      if (c) c.textContent = idx + 1;
-      setPhoto(idx); // keep the page gallery in sync
-    };
-
-    box.querySelector('.lightbox-close').onclick = closeLightbox;
-    if (multi) {
-      box.querySelector('.prev').onclick = e => { e.stopPropagation(); show(idx - 1); };
-      box.querySelector('.next').onclick = e => { e.stopPropagation(); show(idx + 1); };
-    }
-    box.onclick = e => { if (e.target === box) closeLightbox(); };
-
-    box._keyHandler = e => {
-      if (e.key === 'Escape') closeLightbox();
-      else if (e.key === 'ArrowRight' && multi) show(idx + 1);
-      else if (e.key === 'ArrowLeft' && multi) show(idx - 1);
-    };
-    document.addEventListener('keydown', box._keyHandler);
-
-    // Swipe gestures (mobile)
-    let startX = 0, startY = 0;
-    box.addEventListener('touchstart', e => {
-      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-    }, { passive: true });
-    box.addEventListener('touchend', e => {
-      const dx = e.changedTouches[0].clientX - startX;
-      const dy = e.changedTouches[0].clientY - startY;
-      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-        if (multi) show(idx + (dx < 0 ? 1 : -1));
-      } else if (dy > 80 && Math.abs(dy) > Math.abs(dx)) {
-        closeLightbox(); // swipe down to dismiss
-      }
-    }, { passive: true });
-  }
-
-  function closeLightbox() {
-    const box = document.getElementById('lightbox');
-    if (!box) return;
-    document.removeEventListener('keydown', box._keyHandler);
-    box.remove();
-    document.body.style.overflow = '';
-  }
-
-  async function handleLike(id) {
-    const btn = document.getElementById('like-btn');
-    if (!btn) return;
-    const res = await toggleRep(id);
-    if (res === 'auth') {
-      requireAuth(async () => {
-        await initLikes();
-        handleLike(id);
-      }, () => {});
-      return;
-    }
-    if (!res) return;
-    const cur = parseInt(document.getElementById('like-count').textContent) || 0;
-    const n = res === 'liked' ? cur + 1 : Math.max(cur - 1, 0);
-    btn.classList.toggle('liked', res === 'liked');
-    if (res === 'liked') repBurst(btn);
-    btn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${res === 'liked' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
-      <span id="like-count">${n}</span> ${n === 1 ? 'rep' : 'reps'}`;
-  }
-
-  // ─── Build timeline ────────────────────────────────────────────
-  async function loadTimeline(carId, canManage) {
-    const list = document.getElementById('timeline-list');
-    if (!list) return;
-    const ups = await getUpdates(carId);
-    if (!ups.length) {
-      list.innerHTML = `<p class="dim-note">No updates yet — the story starts here.</p>`;
-      return;
-    }
-    list.innerHTML = `<div class="timeline">` + ups.map(u => `
-      <div class="tl-item">
-        <span class="tl-dot"></span>
-        <div class="tl-content">
-          <div class="tl-date">${fmtDate(u.created_at, true)}</div>
-          <div class="tl-title">${escapeHtml(u.title)}</div>
-          ${u.body ? `<div class="tl-text">${escapeHtml(u.body)}</div>` : ''}
-          ${u.photo ? `<img class="tl-photo" src="${encodeURI(thumbUrl(u.photo))}" onerror="this.onerror=null;this.src='${encodeURI(u.photo)}'" alt="" loading="lazy" onclick="window.open('${encodeURI(u.photo)}','_blank')">` : ''}
-          ${canManage ? `<button class="inline-del" onclick="delUpdate('${u.id}','${carId}')">Delete</button>` : ''}
-        </div>
-      </div>`).join('') + `</div>`;
-  }
-
-  async function postUpdate(carId) {
-    const title = document.getElementById('tl-title').value.trim();
-    if (!title) { showToast('Give the update a title.', 'error'); return; }
-    const btn = document.getElementById('tl-post');
-    btn.disabled = true; btn.textContent = 'Posting…';
-    try {
-      let photo = null;
-      const fileInput = document.getElementById('tl-photo');
-      if (fileInput.files.length) photo = await uploadPhoto(fileInput.files[0]);
-      await addUpdate(carId, title, document.getElementById('tl-body').value, photo);
-      document.getElementById('tl-title').value = '';
-      document.getElementById('tl-body').value = '';
-      fileInput.value = '';
-      document.getElementById('tl-photo-label').textContent = 'Add photo';
-      showToast('Update posted!');
-      loadTimeline(carId, true);
-    } catch (e) {
-      console.error(e);
-      showToast('Could not post update.', 'error');
-    } finally {
-      btn.disabled = false; btn.textContent = 'Post update';
-    }
-  }
-
-  async function delUpdate(id, carId) {
-    if (!confirm('Delete this update?')) return;
-    try { await deleteUpdate(id); loadTimeline(carId, true); }
-    catch (e) { showToast('Could not delete.', 'error'); }
-  }
-
-  // ─── Comments ──────────────────────────────────────────────────
-  async function loadComments(carId, canModerate) {
-    const list = document.getElementById('comments-list');
-    if (!list) return;
-    const [items, user] = await Promise.all([getComments(carId), getCurrentUser()]);
-    const countEl = document.getElementById('comment-count');
-    if (countEl) countEl.textContent = items.length ? `· ${items.length}` : '';
-
-    list.innerHTML = items.length ? items.map(c => `
-      <div class="comment">
-        <div class="comment-avatar">${escapeHtml((c.author || '?')[0].toUpperCase())}</div>
-        <div class="comment-main">
-          <div class="comment-head">
-            <span class="comment-author">${escapeHtml(c.author || 'Member')}</span>
-            <span class="comment-time">${fmtDate(c.created_at)}</span>
-          </div>
-          <div class="comment-body">${escapeHtml(c.body)}</div>
-        </div>
-        ${(user && c.user_id === user.id) || canModerate
-          ? `<button class="inline-del" onclick="delComment('${c.id}','${carId}',${canModerate})" title="Delete">×</button>` : ''}
-      </div>`).join('')
-      : `<p class="dim-note">No comments yet — be the first.</p>`;
-
-    const form = document.getElementById('comment-form');
-    if (user) {
-      form.innerHTML = `
-        <div class="comment-compose">
-          <textarea id="comment-input" class="text-area" maxlength="1000" placeholder="Say something about this build…" style="min-height:56px"></textarea>
-          <button class="btn btn-primary" id="comment-post" onclick="postComment('${carId}',${canModerate})">Post</button>
-        </div>`;
-    } else {
-      form.innerHTML = `<button class="btn" onclick="requireAuth(async () => { await initLikes(); loadComments('${carId}', ${canModerate}); }, () => {})">Sign in to comment</button>`;
-    }
-  }
-
-  async function postComment(carId, canModerate) {
-    const input = document.getElementById('comment-input');
-    const body = input.value.trim();
-    if (!body) return;
-    const btn = document.getElementById('comment-post');
-    btn.disabled = true; btn.textContent = 'Posting…';
-    try {
-      await addComment(carId, body);
-      loadComments(carId, canModerate);
-    } catch (e) {
-      console.error(e);
-      showToast('Could not post comment.', 'error');
-      btn.disabled = false; btn.textContent = 'Post';
-    }
-  }
-
-  async function delComment(id, carId, canModerate) {
-    if (!confirm('Delete this comment?')) return;
-    try { await deleteComment(id); loadComments(carId, canModerate); }
-    catch (e) { showToast('Could not delete.', 'error'); }
-  }
-
-  // ─── Request Callout ───────────────────────────────────────────
-  function openCallout(carId) {
-    requireAuth(async (user) => {
-      if (!(await userHasCar(user.id))) {
-        showToast('Add your own car to the garage first to request a callout.', 'error');
-        return;
-      }
-      showCalloutModal(carId);
-    }, () => {});
-  }
-
-  function showCalloutModal(carId) {
-    if (document.getElementById('callout-overlay')) return;
-    const overlay = document.createElement('div');
-    overlay.id = 'callout-overlay';
-    overlay.className = 'auth-overlay';
-    overlay.innerHTML = `
-      <div class="auth-modal">
-        <button class="auth-close" onclick="closeCallout()" title="Close">&times;</button>
-        <h2 class="auth-title">Request a callout</h2>
-        <p class="auth-sub">The owner gets notified. Add a note if you like.</p>
-        <div class="auth-form">
-          <div class="field">
-            <label>Message (optional)</label>
-            <textarea id="callout-msg" class="text-area" placeholder="e.g. Keen to link up for a shoot this weekend" maxlength="500" style="min-height:90px"></textarea>
-          </div>
-          <p class="auth-error" id="callout-error"></p>
-          <button class="btn btn-primary" id="callout-send" onclick="sendCallout('${carId}')" style="width:100%;justify-content:center">Send request</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) closeCallout(); });
-    document.getElementById('callout-msg').focus();
-  }
-
-  function closeCallout() {
-    const el = document.getElementById('callout-overlay');
-    if (el) el.remove();
-  }
-
-  async function sendCallout(carId) {
-    const btn = document.getElementById('callout-send');
-    const err = document.getElementById('callout-error');
-    btn.textContent = 'Sending…'; btn.disabled = true; err.textContent = '';
-    try {
-      await createCallout(carId, document.getElementById('callout-msg').value);
-      closeCallout();
-      showToast('Callout sent to the owner!');
-    } catch (e) {
-      console.error(e);
-      err.textContent = e?.message || 'Could not send — try again.';
-      btn.textContent = 'Send request'; btn.disabled = false;
-    }
-  }
-
-  async function confirmDelete(id) {
-    if (!confirm('Delete this car? This cannot be undone.')) return;
-    await deleteCar(id);
-    location.href = 'index.html';
-  }
-
-  init();
-</script>
-</body>
-</html>
+        <script src="app.js"></script>
+        <script src="auth.js"></script>
+        <script src="push.js"></script>
+        <script>
+            async function init() {
+                initAuth();
+                const params = new URLSearchParams(location.search);
+                const id = params.get('id');
+                const [car, currentUser] = await Promise.all([
+                  id ? getCar(id) : null,
+                  getCurrentUser(),
+                  initLikes(),
+                ]);
+            
+                if (!car) {
+                  document.getElementById('car-detail').innerHTML = `
+                    <div style="text-align:center;padding:4rem 0;color:var(--text-muted)">
+                      <p style="font-size:1.1rem;margin-bottom:1rem">Car not found.</p>
+                      <a href="index.html" class="btn">Back to Garage</a>
+                    </div>`;
+                  return;
+                }
+            
+                // canManage = owner OR admin (edit/delete). isActualOwner = the real owner only.
+                const canManage = !!currentUser && (car.user_id === currentUser.id || isAdmin(currentUser));
+                const isActualOwner = !!currentUser && car.user_id === currentUser.id;
+                document.title = `${car.year ? car.year + ' ' : ''}${car.make} ${car.model} – The Garage`;
+                render(car, canManage, isActualOwner);
+              }
+            
+              function render(car, canManage, isActualOwner) {
+                const title = escapeHtml([car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car');
+                const meta = escapeHtml([car.year, car.drivetrain, car.colour].filter(Boolean).join(' · '));
+            
+                // Status accent theming for the whole page
+                const statusMeta = STATUS_META[car.status];
+                const accent = statusMeta ? statusMeta.color : '#e63030';
+                const detailRoot = document.getElementById('car-detail');
+                detailRoot.style.setProperty('--page-accent', accent);
+            
+                const statusBadge = statusMeta
+                  ? `<span class="status-badge" style="background:${statusMeta.bg};color:${statusMeta.color};border:1px solid ${statusMeta.color}44">${escapeHtml(car.status)}</span>`
+                  : '';
+            
+                // Spec chips shown on the hero
+                const chip = (text, icon) => `<span class="hero-chip">${icon || ''}${escapeHtml(text)}</span>`;
+                const chips = [
+                  car.year ? chip(car.year) : '',
+                  car.engine ? chip(car.engine) : '',
+                  car.power ? chip(car.power, catIcon('Engine', 13)) : '',
+                  car.drivetrain ? chip(car.drivetrain, catIcon('Wheels', 13)) : '',
+                  car.colour ? chip(car.colour, catIcon('Colour', 13)) : '',
+                ].join('');
+            
+                // Hero / gallery
+                let galleryHtml = '';
+                let headerHtml = '';
+                if (car.photos && car.photos.length) {
+                  const thumbs = car.photos.map((src, i) => `
+                    <div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="setPhoto(${i})">
+                      <img src="${encodeURI(src)}" alt="Photo ${i + 1}">
+                    </div>`).join('');
+                  galleryHtml = `
+                    <div class="photo-gallery">
+                      <div class="car-hero" style="--tint:${accent}2e" onclick="openLightbox()">
+                        <img id="gallery-main-img" src="${encodeURI(car.photos[0])}" alt="${title}">
+                        <div class="car-hero-content">
+                          ${statusBadge}
+                          <h1 class="car-hero-title">${title}</h1>
+                          <div class="hero-chips">${chips}</div>
+                        </div>
+                      </div>
+                      ${car.photos.length > 1 ? `<div class="gallery-thumbs">${thumbs}</div>` : ''}
+                    </div>`;
+                } else {
+                  headerHtml = `
+                    <div class="car-detail-title" style="margin-bottom:1rem">
+                      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+                        <h1 style="margin:0">${title}</h1>
+                        ${statusBadge}
+                      </div>
+                      ${meta ? `<p class="year-make">${meta}</p>` : ''}
+                    </div>`;
+                  galleryHtml = `
+                    <div class="photo-gallery">
+                      <div class="gallery-main">
+                        <div class="no-photo"><span>${carIcon()}</span><p>No photos yet</p></div>
+                      </div>
+                    </div>`;
+                }
+            
+                // Specs
+                const specRows = [
+                  ['Make', car.make], ['Model', car.model], ['Year', car.year],
+                  ['Engine', car.engine], ['Power', car.power], ['Drivetrain', car.drivetrain],
+                  ['Colour', car.colour], ['Status', car.status],
+                ].filter(([, v]) => v);
+            
+                // Owner row links to profile
+                const ownerRow = car.owner
+                  ? `<div class="spec-row"><span class="spec-label">Owner</span><span class="spec-value">${
+                      car.user_id
+                        ? `<a class="owner-link" href="profile.html?id=${car.user_id}" style="color:inherit">${escapeHtml(car.owner)}</a>`
+                        : escapeHtml(car.owner)
+                    }</span></div>`
+                  : '';
+            
+                const specsHtml = (specRows.length || ownerRow)
+                  ? specRows.map(([k, v]) => `<div class="spec-row"><span class="spec-label">${k}</span><span class="spec-value">${escapeHtml(v)}</span></div>`).join('') + ownerRow
+                  : '<p style="color:var(--text-dim);font-size:0.85rem">No specs added.</p>';
+            
+                // Mods
+                let modsHtml = '<p style="color:var(--text-dim);font-size:0.85rem">No mods listed.</p>';
+                if (car.mods && car.mods.length) {
+                  const grouped = {};
+                  car.mods.map(normalizeMod).forEach(m => { (grouped[m.cat] = grouped[m.cat] || []).push(m.name); });
+                  modsHtml = Object.entries(grouped).map(([cat, names]) => {
+                    const color = CAT_COLORS[cat] || CAT_COLORS.Other;
+                    return `
+                      <div class="mods-group">
+                        <div class="mods-group-header">
+                          <span class="mods-group-icon" style="color:${color}">${catIcon(cat, 15)}</span>${escapeHtml(cat)}
+                        </div>
+                        ${names.map(n => `
+                          <div class="mod-detail-item">
+                            <span class="mod-detail-dot" style="background:${color}"></span><span>${escapeHtml(n)}</span>
+                          </div>`).join('')}
+                      </div>`;
+                  }).join('');
+                }
+            
+                // Like button
+                const liked = hasLiked(car.id);
+                const likeHtml = `
+                  <button class="like-btn like-btn-lg ${liked ? 'liked' : ''}" id="like-btn" onclick="handleLike('${car.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
+                    <span id="like-count">${car.likes || 0}</span> ${car.likes === 1 ? 'rep' : 'reps'}
+                  </button>`;
+            
+                // Instagram
+                const igHandle = (car.instagram || '').replace(/[^A-Za-z0-9._]/g, '');
+                const igHtml = igHandle
+                  ? `<a class="ig-link" href="https://instagram.com/${encodeURIComponent(igHandle)}" target="_blank" rel="noopener">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 4a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z"/><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/><path d="M16.5 7.5l0 .01"/></svg>
+                      @${escapeHtml(igHandle)}
+                    </a>` : '';
+            
+                document.getElementById('car-detail').innerHTML = `
+                  ${headerHtml}
+                  ${galleryHtml}
+            
+                  <div class="car-detail-header" style="margin:0.75rem 0 1.5rem">
+                    <div class="car-detail-title">${igHtml}</div>
+                    <div class="car-detail-actions">
+                      ${likeHtml}
+                      ${!isActualOwner ? `<button class="btn btn-primary" onclick="openCallout('${car.id}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 8a3 3 0 0 1 0 6"/><path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"/><path d="M12 8h0l4.524 -3.77a0.9 .9 0 0 1 1.476 .692v12.156a0.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h8"/></svg>
+                        Request Callout</button>` : ''}
+                      ${canManage ? `<a href="add.html?id=${car.id}" class="btn">Edit</a>` : ''}
+                      ${canManage ? `<button class="btn btn-danger" onclick="confirmDelete('${car.id}')">Delete</button>` : ''}
+                    </div>
+                  </div>
+            
+                  <div class="detail-sections">
+                    <div class="detail-card">
+                      <h3>Specs</h3>
+                      ${specsHtml}
+                    </div>
+                    <div class="detail-card">
+                      <h3>Mods · ${car.mods ? car.mods.length : 0}</h3>
+                      ${modsHtml}
+                    </div>
+                  </div>
+            
+                  <div class="detail-card" style="margin-bottom:1rem">
+                    <h3>Build Timeline</h3>
+                    <div id="timeline-list"><p class="dim-note">Loading…</p></div>
+                    ${isActualOwner ? `
+                    <div class="tl-form">
+                      <input type="text" id="tl-title" maxlength="120" placeholder="What changed? e.g. Fitted coilovers">
+                      <textarea id="tl-body" class="text-area" maxlength="1000" placeholder="Details (optional)" style="min-height:56px"></textarea>
+                      <div class="tl-form-row">
+                        <label class="btn" style="position:relative;overflow:hidden">
+                          <input type="file" id="tl-photo" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+                          <span id="tl-photo-label">Add photo</span>
+                        </label>
+                        <button class="btn btn-primary" id="tl-post" onclick="postUpdate('${car.id}')">Post update</button>
+                      </div>
+                    </div>` : ''}
+                  </div>
+            
+                  <div class="detail-card">
+                    <h3>Comments <span id="comment-count" class="count-chip"></span></h3>
+                    <div id="comments-list"><p class="dim-note">Loading…</p></div>
+                    <div id="comment-form"></div>
+                  </div>`;
+            
+                loadTimeline(car.id, canManage);
+                loadComments(car.id, canManage);
+                const tlPhoto = document.getElementById('tl-photo');
+                if (tlPhoto) tlPhoto.addEventListener('change', function () {
+                  document.getElementById('tl-photo-label').textContent =
+                    this.files.length ? '1 photo attached' : 'Add photo';
+                });
+            
+                // store photos ref for gallery
+                window._photos = car.photos || [];
+              }
+            
+              function setPhoto(idx) {
+                window._currentPhoto = idx;
+                const img = document.getElementById('gallery-main-img');
+                if (img) img.src = window._photos[idx];
+                document.querySelectorAll('.gallery-thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
+              }
+            
+              // ─── Lightbox ──────────────────────────────────────────────────
+              function openLightbox() {
+                const photos = window._photos || [];
+                if (!photos.length || document.getElementById('lightbox')) return;
+                let idx = window._currentPhoto || 0;
+            
+                const box = document.createElement('div');
+                box.id = 'lightbox';
+                box.className = 'lightbox';
+                const multi = photos.length > 1;
+                box.innerHTML = `
+                  <button class="lightbox-close" title="Close (Esc)">&times;</button>
+                  ${multi ? `<button class="lightbox-nav prev" title="Previous">&#8249;</button>` : ''}
+                  <img id="lightbox-img" src="${encodeURI(photos[idx])}" alt="Photo">
+                  ${multi ? `<button class="lightbox-nav next" title="Next">&#8250;</button>` : ''}
+                  ${multi ? `<div class="lightbox-count"><span id="lightbox-count">${idx + 1}</span> / ${photos.length}</div>` : ''}`;
+                document.body.appendChild(box);
+                document.body.style.overflow = 'hidden';
+            
+                const show = i => {
+                  idx = (i + photos.length) % photos.length;
+                  document.getElementById('lightbox-img').src = encodeURI(photos[idx]);
+                  const c = document.getElementById('lightbox-count');
+                  if (c) c.textContent = idx + 1;
+                  setPhoto(idx); // keep the page gallery in sync
+                };
+            
+                box.querySelector('.lightbox-close').onclick = closeLightbox;
+                if (multi) {
+                  box.querySelector('.prev').onclick = e => { e.stopPropagation(); show(idx - 1); };
+                  box.querySelector('.next').onclick = e => { e.stopPropagation(); show(idx + 1); };
+                }
+                box.onclick = e => { if (e.target === box) closeLightbox(); };
+            
+                box._keyHandler = e => {
+                  if (e.key === 'Escape') closeLightbox();
+                  else if (e.key === 'ArrowRight' && multi) show(idx + 1);
+                  else if (e.key === 'ArrowLeft' && multi) show(idx - 1);
+                };
+                document.addEventListener('keydown', box._keyHandler);
+            
+                // Swipe gestures (mobile)
+                let startX = 0, startY = 0;
+                box.addEventListener('touchstart', e => {
+                  startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+                }, { passive: true });
+                box.addEventListener('touchend', e => {
+                  const dx = e.changedTouches[0].clientX - startX;
+                  const dy = e.changedTouches[0].clientY - startY;
+                  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                    if (multi) show(idx + (dx < 0 ? 1 : -1));
+                  } else if (dy > 80 && Math.abs(dy) > Math.abs(dx)) {
+                    closeLightbox(); // swipe down to dismiss
+                  }
+                }, { passive: true });
+              }
+            
+              function closeLightbox() {
+                const box = document.getElementById('lightbox');
+                if (!box) return;
+                document.removeEventListener('keydown', box._keyHandler);
+                box.remove();
+                document.body.style.overflow = '';
+              }
+            
+              async function handleLike(id) {
+                const btn = document.getElementById('like-btn');
+                if (!btn) return;
+                const res = await toggleRep(id);
+                if (res === 'auth') {
+                  requireAuth(async () => {
+                    await initLikes();
+                    handleLike(id);
+                  }, () => {});
+                  return;
+                }
+                if (!res) return;
+                const cur = parseInt(document.getElementById('like-count').textContent) || 0;
+                const n = res === 'liked' ? cur + 1 : Math.max(cur - 1, 0);
+                btn.classList.toggle('liked', res === 'liked');
+                if (res === 'liked') repBurst(btn);
+                btn.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${res === 'liked' ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
+                  <span id="like-count">${n}</span> ${n === 1 ? 'rep' : 'reps'}`;
+              }
+            
+              // ─── Build timeline ────────────────────────────────────────────
+              async function loadTimeline(carId, canManage) {
+                const list = document.getElementById('timeline-list');
+                if (!list) return;
+                const ups = await getUpdates(carId);
+                if (!ups.length) {
+                  list.innerHTML = `<p class="dim-note">No updates yet — the story starts here.</p>`;
+                  return;
+                }
+                list.innerHTML = `<div class="timeline">` + ups.map(u => `
+                  <div class="tl-item">
+                    <span class="tl-dot"></span>
+                    <div class="tl-content">
+                      <div class="tl-date">${fmtDate(u.created_at, true)}</div>
+                      <div class="tl-title">${escapeHtml(u.title)}</div>
+                      ${u.body ? `<div class="tl-text">${escapeHtml(u.body)}</div>` : ''}
+                      ${u.photo ? `<img class="tl-photo" src="${encodeURI(thumbUrl(u.photo))}" onerror="this.onerror=null;this.src='${encodeURI(u.photo)}'" alt="" loading="lazy" onclick="window.open('${encodeURI(u.photo)}','_blank')">` : ''}
+                      ${canManage ? `<button class="inline-del" onclick="delUpdate('${u.id}','${carId}')">Delete</button>` : ''}
+                    </div>
+                  </div>`).join('') + `</div>`;
+              }
+            
+              async function postUpdate(carId) {
+                const title = document.getElementById('tl-title').value.trim();
+                if (!title) { showToast('Give the update a title.', 'error'); return; }
+                const btn = document.getElementById('tl-post');
+                btn.disabled = true; btn.textContent = 'Posting…';
+                try {
+                  let photo = null;
+                  const fileInput = document.getElementById('tl-photo');
+                  if (fileInput.files.length) photo = await uploadPhoto(fileInput.files[0]);
+                  await addUpdate(carId, title, document.getElementById('tl-body').value, photo);
+                  document.getElementById('tl-title').value = '';
+                  document.getElementById('tl-body').value = '';
+                  fileInput.value = '';
+                  document.getElementById('tl-photo-label').textContent = 'Add photo';
+                  showToast('Update posted!');
+                  loadTimeline(carId, true);
+                } catch (e) {
+                  console.error(e);
+                  showToast('Could not post update.', 'error');
+                } finally {
+                  btn.disabled = false; btn.textContent = 'Post update';
+                }
+              }
+            
+              async function delUpdate(id, carId) {
+                if (!confirm('Delete this update?')) return;
+                try { await deleteUpdate(id); loadTimeline(carId, true); }
+                catch (e) { showToast('Could not delete.', 'error'); }
+              }
+            
+              // ─── Comments ──────────────────────────────────────────────────
+              async function loadComments(carId, canModerate) {
+                const list = document.getElementById('comments-list');
+                if (!list) return;
+                const [items, user] = await Promise.all([getComments(carId), getCurrentUser()]);
+                const countEl = document.getElementById('comment-count');
+                if (countEl) countEl.textContent = items.length ? `· ${items.length}` : '';
+            
+                list.innerHTML = items.length ? items.map(c => `
+                  <div class="comment">
+                    <div class="comment-avatar">${escapeHtml((c.author || '?')[0].toUpperCase())}</div>
+                    <div class="comment-main">
+                      <div class="comment-head">
+                        <span class="comment-author">${escapeHtml(c.author || 'Member')}</span>
+                        <span class="comment-time">${fmtDate(c.created_at)}</span>
+                      </div>
+                      <div class="comment-body">${escapeHtml(c.body)}</div>
+                    </div>
+                    ${(user && c.user_id === user.id) || canModerate
+                      ? `<button class="inline-del" onclick="delComment('${c.id}','${carId}',${canModerate})" title="Delete">×</button>` : ''}
+                  </div>`).join('')
+                  : `<p class="dim-note">No comments yet — be the first.</p>`;
+            
+                const form = document.getElementById('comment-form');
+                if (user) {
+                  form.innerHTML = `
+                    <div class="comment-compose">
+                      <textarea id="comment-input" class="text-area" maxlength="1000" placeholder="Say something about this build…" style="min-height:56px"></textarea>
+                      <button class="btn btn-primary" id="comment-post" onclick="postComment('${carId}',${canModerate})">Post</button>
+                    </div>`;
+                } else {
+                  form.innerHTML = `<button class="btn" onclick="requireAuth(async () => { await initLikes(); loadComments('${carId}', ${canModerate}); }, () => {})">Sign in to comment</button>`;
+                }
+              }
+            
+              async function postComment(carId, canModerate) {
+                const input = document.getElementById('comment-input');
+                const body = input.value.trim();
+                if (!body) return;
+                const btn = document.getElementById('comment-post');
+                btn.disabled = true; btn.textContent = 'Posting…';
+                try {
+                  await addComment(carId, body);
+                  loadComments(carId, canModerate);
+                } catch (e) {
+                  console.error(e);
+                  showToast('Could not post comment.', 'error');
+                  btn.disabled = false; btn.textContent = 'Post';
+                }
+              }
+            
+              async function delComment(id, carId, canModerate) {
+                if (!confirm('Delete this comment?')) return;
+                try { await deleteComment(id); loadComments(carId, canModerate); }
+                catch (e) { showToast('Could not delete.', 'error'); }
+              }
+            
+              // ─── Request Callout ───────────────────────────────────────────
+              function openCallout(carId) {
+                requireAuth(async (user) => {
+                  if (!(await userHasCar(user.id))) {
+                    showToast('Add your own car to the garage first to request a callout.', 'error');
+                    return;
+                  }
+                  showCalloutModal(carId);
+                }, () => {});
+              }
+            
+              function showCalloutModal(carId) {
+                if (document.getElementById('callout-overlay')) return;
+                const overlay = document.createElement('div');
+                overlay.id = 'callout-overlay';
+                overlay.className = 'auth-overlay';
+                overlay.innerHTML = `
+                  <div class="auth-modal">
+                    <button class="auth-close" onclick="closeCallout()" title="Close">&times;</button>
+                    <h2 class="auth-title">Request a callout</h2>
+                    <p class="auth-sub">The owner gets notified. Add a note if you like.</p>
+                    <div class="auth-form">
+                      <div class="field">
+                        <label>Message (optional)</label>
+                        <textarea id="callout-msg" class="text-area" placeholder="e.g. Keen to link up for a shoot this weekend" maxlength="500" style="min-height:90px"></textarea>
+                      </div>
+                      <p class="auth-error" id="callout-error"></p>
+                      <button class="btn btn-primary" id="callout-send" onclick="sendCallout('${carId}')" style="width:100%;justify-content:center">Send request</button>
+                    </div>
+                  </div>`;
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click', e => { if (e.target === overlay) closeCallout(); });
+                document.getElementById('callout-msg').focus();
+              }
+            
+              function closeCallout() {
+                const el = document.getElementById('callout-overlay');
+                if (el) el.remove();
+              }
+            
+              async function sendCallout(carId) {
+                const btn = document.getElementById('callout-send');
+                const err = document.getElementById('callout-error');
+                btn.textContent = 'Sending…'; btn.disabled = true; err.textContent = '';
+                try {
+                  await createCallout(carId, document.getElementById('callout-msg').value);
+                  closeCallout();
+                  showToast('Callout sent to the owner!');
+                } catch (e) {
+                  console.error(e);
+                  err.textContent = e?.message || 'Could not send — try again.';
+                  btn.textContent = 'Send request'; btn.disabled = false;
+                }
+              }
+            
+              async function confirmDelete(id) {
+                if (!confirm('Delete this car? This cannot be undone.')) return;
+                await deleteCar(id);
+                location.href = 'index.html';
+              }
+            
+              init();
+            </script>
+            </body>
+            </html>

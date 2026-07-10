@@ -1,110 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile – The Garage</title>
-  <meta name="description" content="Member garage — builds and mods on The Garage.">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d0d0f">
-  <link rel="apple-touch-icon" href="icon.svg">
-  <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
-</head>
-<body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="bg.js"></script>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Profile – The Garage</title>
+        <meta name="description" content="Member garage — builds and mods on The Garage.">
+        <link rel="icon" href="icon.svg" type="image/svg+xml">
+        <link rel="stylesheet" href="style.css">
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#0d0d0f">
+        <link rel="apple-touch-icon" href="icon.svg">
+        <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="bg.js"></script>
 
-<nav>
-  <div class="nav-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
-    <a href="index.html">The <span style="color:var(--accent)">Garage</span></a>
-  </div>
-  <div class="nav-actions">
-    <a href="index.html" class="btn btn-ghost">← All Cars</a>
-  </div>
-</nav>
+        <nav>
+            <div class="nav-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+                <a href="index.html">The
+                    <span style="color:var(--accent)">Garage</span>
+                </a>
+            </div>
+            <div class="nav-actions">
+                <a href="index.html" class="btn btn-ghost">← All Cars</a>
+            </div>
+        </nav>
 
-<main>
-  <div id="profile-root">
-    <p class="muted-center">Loading…</p>
-  </div>
-</main>
+        <main>
+            <div id="profile-root">
+                <p class="muted-center">Loading…</p>
+            </div>
+        </main>
 
-<script src="app.js"></script>
-<script src="auth.js"></script>
-<script src="push.js"></script>
-<script>
-  async function init() {
-    initAuth();
-    const params = new URLSearchParams(location.search);
-    const userId = params.get('id');
-
-    if (!userId) {
-      document.getElementById('profile-root').innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">${carIcon()}</div>
-          <h3>No profile found</h3>
-          <p><a href="index.html" class="btn" style="margin-top:1rem">Back to Garage</a></p>
-        </div>`;
-      return;
-    }
-
-    const [cars, currentUser] = await Promise.all([
-      getCarsByUser(userId),
-      getCurrentUser(),
-      initLikes(),
-    ]);
-
-    const isMe = currentUser && currentUser.id === userId;
-    const displayName = cars.length ? (cars[0].owner || 'Unknown') : 'Unknown';
-    const totalMods = cars.reduce((n, c) => n + (c.mods ? c.mods.length : 0), 0);
-    const totalReps = cars.reduce((n, c) => n + (c.likes || 0), 0);
-
-    document.title = `${displayName} – The Garage`;
-
-    document.getElementById('profile-root').innerHTML = `
-      <div class="profile-header">
-        <div class="profile-avatar">${escapeHtml(displayName[0].toUpperCase())}</div>
-        <div class="profile-info">
-          <div class="profile-name">${escapeHtml(displayName)}</div>
-          ${isMe ? '<div class="profile-you-badge">You</div>' : ''}
-        </div>
-        <div class="profile-stats">
-          <div class="stat-pill">
-            <span>${cars.length}</span>
-            <label>${cars.length === 1 ? 'Car' : 'Cars'}</label>
-          </div>
-          <div class="stat-pill">
-            <span>${totalMods}</span>
-            <label>Mods</label>
-          </div>
-          <div class="stat-pill">
-            <span>${totalReps}</span>
-            <label>Reps</label>
-          </div>
-        </div>
-      </div>
-
-      ${cars.length === 0 ? `
-        <div class="empty-state" style="padding:3rem 0">
-          <div class="empty-icon">${carIcon()}</div>
-          <h3>No cars yet</h3>
-          <p>Nothing in the garage.</p>
-          ${isMe ? `<a href="add.html" class="btn btn-primary" style="margin-top:1.5rem">Add your first car</a>` : ''}
-        </div>` : `
-        <div class="car-grid" id="car-grid">
-          ${cars.map(car => renderCarCard(car, { showOwner: false })).join('')}
-        </div>`}`;
-
-    initCardExtras(document.getElementById('profile-root'));
-  }
-
-  init();
-</script>
-</body>
-</html>
+        <script src="app.js"></script>
+        <script src="auth.js"></script>
+        <script src="push.js"></script>
+        <script>
+            async function init() {
+                initAuth();
+                const params = new URLSearchParams(location.search);
+                const userId = params.get('id');
+            
+                if (!userId) {
+                  document.getElementById('profile-root').innerHTML = `
+                    <div class="empty-state">
+                      <div class="empty-icon">${carIcon()}</div>
+                      <h3>No profile found</h3>
+                      <p><a href="index.html" class="btn" style="margin-top:1rem">Back to Garage</a></p>
+                    </div>`;
+                  return;
+                }
+            
+                const [cars, currentUser] = await Promise.all([
+                  getCarsByUser(userId),
+                  getCurrentUser(),
+                  initLikes(),
+                ]);
+            
+                const isMe = currentUser && currentUser.id === userId;
+                const displayName = cars.length ? (cars[0].owner || 'Unknown') : 'Unknown';
+                const totalMods = cars.reduce((n, c) => n + (c.mods ? c.mods.length : 0), 0);
+                const totalReps = cars.reduce((n, c) => n + (c.likes || 0), 0);
+            
+                document.title = `${displayName} – The Garage`;
+            
+                document.getElementById('profile-root').innerHTML = `
+                  <div class="profile-header">
+                    <div class="profile-avatar">${escapeHtml(displayName[0].toUpperCase())}</div>
+                    <div class="profile-info">
+                      <div class="profile-name">${escapeHtml(displayName)}</div>
+                      ${isMe ? '<div class="profile-you-badge">You</div>' : ''}
+                    </div>
+                    <div class="profile-stats">
+                      <div class="stat-pill">
+                        <span>${cars.length}</span>
+                        <label>${cars.length === 1 ? 'Car' : 'Cars'}</label>
+                      </div>
+                      <div class="stat-pill">
+                        <span>${totalMods}</span>
+                        <label>Mods</label>
+                      </div>
+                      <div class="stat-pill">
+                        <span>${totalReps}</span>
+                        <label>Reps</label>
+                      </div>
+                    </div>
+                  </div>
+            
+                  ${cars.length === 0 ? `
+                    <div class="empty-state" style="padding:3rem 0">
+                      <div class="empty-icon">${carIcon()}</div>
+                      <h3>No cars yet</h3>
+                      <p>Nothing in the garage.</p>
+                      ${isMe ? `<a href="add.html" class="btn btn-primary" style="margin-top:1.5rem">Add your first car</a>` : ''}
+                    </div>` : `
+                    <div class="car-grid" id="car-grid">
+                      ${cars.map(car => renderCarCard(car, { showOwner: false })).join('')}
+                    </div>`}`;
+            
+                initCardExtras(document.getElementById('profile-root'));
+              }
+            
+              init();
+            </script>
+            </body>
+            </html>
