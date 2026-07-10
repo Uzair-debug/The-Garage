@@ -1,111 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Members – The Garage</title>
-  <meta name="description" content="Member list — The Garage.">
-  <meta name="robots" content="noindex">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d0d0f">
-  <link rel="apple-touch-icon" href="icon.svg">
-  <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
-</head>
-<body>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="bg.js"></script>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Members – The Garage</title>
+        <meta name="description" content="Member list — The Garage.">
+        <meta name="robots" content="noindex">
+        <link rel="icon" href="icon.svg" type="image/svg+xml">
+        <link rel="stylesheet" href="style.css">
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#0d0d0f">
+        <link rel="apple-touch-icon" href="icon.svg">
+        <link rel="preconnect" href="https://fwxxuhyjuujdimqlyfys.supabase.co">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="bg.js"></script>
 
-<nav>
-  <div class="nav-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
-    <a href="index.html">The <span style="color:var(--accent)">Garage</span></a>
-  </div>
-  <div class="nav-actions">
-    <a href="index.html" class="btn btn-ghost">← All Cars</a>
-  </div>
-</nav>
+        <nav>
+            <div class="nav-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-6l2 -5h9l4 4h1a2 2 0 0 1 2 2v5h-2m-4 0h-6m-6 -6h15m-6 0v-5"/></svg>
+                <a href="index.html">The
+                    <span style="color:var(--accent)">Garage</span>
+                </a>
+            </div>
+            <div class="nav-actions">
+                <a href="index.html" class="btn btn-ghost">← All Cars</a>
+            </div>
+        </nav>
 
-<div class="form-page">
-  <h1 id="page-title">Members</h1>
-  <p class="subtitle" id="page-sub">Everyone who has signed up.</p>
-  <div id="admin-content">
-    <p class="muted-center">Loading…</p>
-  </div>
-</div>
+        <div class="form-page">
+            <h1 id="page-title">Members</h1>
+            <p class="subtitle" id="page-sub">Everyone who has signed up.</p>
+            <div id="admin-content">
+                <p class="muted-center">Loading…</p>
+            </div>
+        </div>
 
-<script src="app.js"></script>
-<script src="auth.js"></script>
-<script src="push.js"></script>
-<script>
-  const LASTSEEN_KEY = 'garage_admin_lastseen';
+        <script src="app.js"></script>
+        <script src="auth.js"></script>
+        <script src="push.js"></script>
+        <script>
+            const LASTSEEN_KEY = 'garage_admin_lastseen';
 
-  async function init() {
-    initAuth();
-    const user = await getCurrentUser();
+            async function init() {
+                initAuth();
+                const user = await getCurrentUser();
 
-    if (!isAdmin(user)) {
-      document.getElementById('admin-content').innerHTML = `
+                if (!isAdmin(user)) {
+                    document.getElementById('admin-content').innerHTML = `
         <div style="text-align:center;padding:3rem 0;color:var(--text-muted)">
           <p style="font-size:1.1rem;margin-bottom:1rem">Access denied — admins only.</p>
           <a href="index.html" class="btn">Back to Garage</a>
         </div>`;
-      return;
-    }
+                    return;
+                }
 
-    const profiles = await getProfiles();
-    if (profiles === null) {
-      document.getElementById('admin-content').innerHTML =
-        `<p style="color:#e65050;padding:2rem 0;text-align:center">Couldn't load members. Make sure the profiles table and policy are set up.</p>`;
-      return;
-    }
+                const profiles = await getProfiles();
+                if (profiles === null) {
+                    document.getElementById('admin-content').innerHTML = `<p style="color:#e65050;padding:2rem 0;text-align:center">Couldn't load members. Make sure the profiles table and policy are set up.</p>`;
+                    return;
+                }
 
-    const lastSeen = parseInt(localStorage.getItem(LASTSEEN_KEY) || '0', 10);
-    const newCount = profiles.filter(p => new Date(p.created_at).getTime() > lastSeen).length;
+                const lastSeen = parseInt(localStorage.getItem(LASTSEEN_KEY) || '0', 10);
+                const newCount = profiles.filter(p => new Date(p.created_at).getTime() > lastSeen).length;
 
-    render(profiles, lastSeen, newCount);
+                render(profiles, lastSeen, newCount);
 
-    // Mark as seen now (so next visit's badge reflects only newer signups)
-    localStorage.setItem(LASTSEEN_KEY, Date.now().toString());
-  }
+                // Mark as seen now (so next visit's badge reflects only newer signups)
+                localStorage.setItem(LASTSEEN_KEY, Date.now().toString());
+            }
 
-  function render(profiles, lastSeen, newCount) {
-    const badge = newCount > 0
-      ? `<span class="badge badge-red" style="margin-left:8px">${newCount} new</span>`
-      : '';
-    document.getElementById('page-sub').innerHTML =
-      `${profiles.length} member${profiles.length === 1 ? '' : 's'}${badge}`;
+            function render(profiles, lastSeen, newCount) {
+                const badge = newCount > 0 ? `<span class="badge badge-red" style="margin-left:8px">${newCount} new</span>` : '';
+                document.getElementById('page-sub').innerHTML = `${
+                    profiles.length
+                } member${
+                    profiles.length === 1 ? '' : 's'
+                }${badge}`;
 
-    if (!profiles.length) {
-      document.getElementById('admin-content').innerHTML =
-        `<p style="color:var(--text-muted);padding:2rem 0;text-align:center">No members yet.</p>`;
-      return;
-    }
+                if (! profiles.length) {
+                    document.getElementById('admin-content').innerHTML = `<p style="color:var(--text-muted);padding:2rem 0;text-align:center">No members yet.</p>`;
+                    return;
+                }
 
-    const rows = profiles.map(p => {
-      const isNew = new Date(p.created_at).getTime() > lastSeen;
-      return `
+                const rows = profiles.map(p => {
+                    const isNew = new Date(p.created_at).getTime() > lastSeen;
+                    return `
         <div class="spec-row" style="align-items:center">
           <span class="spec-value" style="display:flex;align-items:center;gap:8px">
-            ${escapeHtml(p.email || '(no email)')}
-            ${isNew ? '<span class="badge badge-red" style="font-size:0.65rem">NEW</span>' : ''}
+            ${
+                        escapeHtml(p.email || '(no email)')
+                    }
+            ${
+                        isNew ? '<span class="badge badge-red" style="font-size:0.65rem">NEW</span>' : ''
+                    }
           </span>
-          <span class="spec-label">${fmtDate(p.created_at, true)}</span>
+          <span class="spec-label">${
+                        fmtDate(p.created_at, true)
+                    }</span>
         </div>`;
-    }).join('');
+                }).join('');
 
-    document.getElementById('admin-content').innerHTML = `
+                document.getElementById('admin-content').innerHTML = `
       <div class="form-section">
         <h3>Sign-ups</h3>
         ${rows}
       </div>`;
-  }
+            }
 
-  init();
-</script>
-</body>
+            init();
+        </script>
+    </body>
 </html>
