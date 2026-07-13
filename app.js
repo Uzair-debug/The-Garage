@@ -454,7 +454,7 @@ function renderCarCard(car, { showOwner = true } = {}) {
 
   const go = `location.href='car.html?id=${car.id}'`;
   return `
-    <div class="car-card" role="button" tabindex="0" onclick="${go}"
+    <div class="car-card" data-car-id="${car.id}" role="button" tabindex="0" onclick="${go}"
          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${go}}">
       <div class="car-card-media"${photosAttr}>
         ${img}
@@ -601,4 +601,120 @@ async function handleCardLike(btn, id) {
     const car = allCars.find(c => c.id === id);
     if (car) car.likes = res === 'liked' ? (car.likes || 0) + 1 : Math.max((car.likes || 0) - 1, 0);
   }
+}
+
+// ─── Gamification: badges, monthly momentum, contributor stats ────
+
+// Count of build-timeline updates authored by a user (car_updates is public read).
+async function getUpdateCountByUser(userId) {
+  const { count, error } = await sb().from('car_updates')
+    .select('id', { count: 'exact', head: true }).eq('user_id', userId);
+  if (error) return 0;
+  return count || 0;
+}
+
+// Count of comments authored by a user (car_comments is public read).
+async function getCommentCountByUser(userId) {
+  const { count, error } = await sb().from('car_comments')
+    .select('id', { count: 'exact', head: true }).eq('user_id', userId);
+  if (error) return 0;
+  return count || 0;
+}
+
+// "OG Builder" = among the first N distinct owners to add a car, ranked by
+// earliest car.updated_at. Cached per page load — the cars table is small
+// and public, so this stays a cheap client-side computation.
+let _ogBuilderIds = null;
+async function getOGBuilderIds(limit = 10) {
+  if (_ogBuilderIds) return _ogBuilderIds;
+  const { data, error } = await sb().from('cars')
+    .select('user_id,updated_at').order('updated_at', { ascending: true });
+  if (error || !data) { _ogBuilderIds = new Set(); return _ogBuilderIds; }
+  const seen = [];
+  for (const row of data) {
+    if (row.user_id && !seen.includes(row.user_id)) seen.push(row.user_id);
+    if (seen.length >= limit) break;
+  }
+  _ogBuilderIds = new Set(seen);
+  return _ogBuilderIds;
+}
+
+// "Build of the Month": reps (x2) + comments (x1) in the trailing 30 days,
+// tallied client-side from the public car_likes / car_comments tables.
+// Requires a minimum score before crowning a winner, so a single quiet
+// build with one rep doesn't get spotlighted.
+let _monthlyMomentum = null;
+async function getMonthlyMomentum() {
+  if (_monthlyMomentum) return _monthlyMomentum;
+  const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+  const [likesRes, commentsRes] = await Promise.all([
+    sb().from('car_likes').select('car_id').gte('created_at', since),
+    sb().from('car_comments').select('car_id').gte('created_at', since),
+  ]);
+  const scores = {};
+  (likesRes.data || []).forEach(r => { scores[r.car_id] = (scores[r.car_id] || 0) + 2; });
+  (commentsRes.data || []).forEach(r => { scores[r.car_id] = (scores[r.car_id] || 0) + 1; });
+  let topId = null, topScore = 0;
+  for (const [id, score] of Object.entries(scores)) {
+    if (score > topScore) { topId = id; topScore = score; }
+  }
+  _monthlyMomentum = { scores, topId: topScore >= 4 ? topId : null, topScore };
+  return _monthlyMomentum;
+}
+
+function currentMonthLabel() {
+  return new Date().toLocaleDateString(undefined, { month: 'long' });
+}
+
+// stats: { carsCount, totalMods, totalReps, updatesCount, commentsCount,
+//          isOG, isBuildOfMonth, calloutCount (optional — own profile only) }
+function computeBadges(stats) {
+  const s = stats || {};
+  const badges = [
+    { id: 'first-build', icon: '🔑', label: 'First Build', desc: 'Added a car to the garage.', earned: (s.carsCount || 0) >= 1 },
+    { id: 'full-garage', icon: '🚗', label: 'Full Garage', desc: 'Two or more builds in the garage.', earned: (s.carsCount || 0) >= 2 },
+    { id: 'wrench-turner', icon: '🔧', label: 'Wrench Turner', desc: '10+ mods across your builds.', earned: (s.totalMods || 0) >= 10 },
+    { id: 'parts-collector', icon: '⚙️', label: 'Parts Collector', desc: '25+ mods across your builds.', earned: (s.totalMods || 0) >= 25 },
+    { id: 'crowd-favorite', icon: '❤️', label: 'Crowd Favorite', desc: '25+ reps across your builds.', earned: (s.totalReps || 0) >= 25 },
+    { id: 'local-legend', icon: '👑', label: 'Local Legend', desc: '100+ reps across your builds.', earned: (s.totalReps || 0) >= 100 },
+    { id: 'storyteller', icon: '📸', label: 'Storyteller', desc: '5+ build timeline updates posted.', earned: (s.updatesCount || 0) >= 5 },
+    { id: 'community-voice', icon: '💬', label: 'Community Voice', desc: '10+ comments left on other builds.', earned: (s.commentsCount || 0) >= 10 },
+    { id: 'og-builder', icon: '🏁', label: 'OG Builder', desc: 'One of the first to add a car to The Garage.', earned: !!s.isOG },
+    { id: 'build-of-month', icon: '🏆', label: `Build of ${currentMonthLabel()}`, desc: 'Topping reps + comments this month.', earned: !!s.isBuildOfMonth },
+  ];
+  if (typeof s.calloutCount === 'number') {
+    badges.push({ id: 'called-out', icon: '📣', label: 'Called Out', desc: '3+ callouts sent or received.', earned: s.calloutCount >= 3 });
+  }
+  return badges;
+}
+
+function renderBadgeWall(badges) {
+  const earned = badges.filter(b => b.earned).length;
+  return `
+    <div class="badge-wall">
+      <div class="badge-wall-head">
+        <h3>Achievements</h3>
+        <span class="count-chip">${earned}/${badges.length}</span>
+      </div>
+      <div class="badge-grid">
+        ${badges.map(b => `
+          <div class="achievement ${b.earned ? 'earned' : 'locked'}" title="${escapeHtml(b.label)} — ${escapeHtml(b.desc)}">
+            <span class="ach-icon">${b.icon}</span>
+            <span class="ach-label">${escapeHtml(b.label)}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// Drop a "Build of the Month" ribbon onto a car card already in the DOM.
+function applyMonthRibbon(root, carId) {
+  if (!carId) return;
+  const scope = root || document;
+  const card = scope.querySelector(`.car-card[data-car-id="${carId}"] .car-card-media`);
+  if (!card || card.querySelector('.month-ribbon')) return;
+  const ribbon = document.createElement('span');
+  ribbon.className = 'month-ribbon';
+  ribbon.title = `Build of ${currentMonthLabel()} — most reps + comments in the last 30 days`;
+  ribbon.innerHTML = `🏆 Build of ${currentMonthLabel()}`;
+  card.appendChild(ribbon);
 }

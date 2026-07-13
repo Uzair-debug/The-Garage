@@ -6,6 +6,7 @@
         <title>The Garage — Every build has a story</title>
         <meta name="description" content="The Garage is our crew's corner of the internet — builds, mods and the stories behind every car. Daily drivers to full-send track weapons.">
         <link rel="canonical" href="https://ourgarage.pages.dev/">
+        <link rel="alternate" type="application/rss+xml" title="The Garage — Crew Activity" href="/feed.xml">
         <meta property="og:type" content="website">
         <meta property="og:site_name" content="The Garage">
         <meta property="og:title" content="The Garage — Every build has a story">
@@ -128,6 +129,7 @@
                 <a href="leaderboard.html">Leaderboard</a>
                 <a href="compare.html">Compare</a>
                 <a href="activity.html">Activity</a>
+                <a href="feed.xml" title="RSS feed of crew activity">RSS</a>
                 <a href="https://dragy.pages.dev" target="_blank" rel="noopener">Dragy</a>
             </div>
             <p>Built by the crew, for the crew. Every build has a story.</p>
@@ -138,7 +140,8 @@
         <script src="push.js"></script>
         <script>
             let allCars = [];
-            
+              let monthlyTopId = null;
+
               function renderSkeletons(n = 6) {
                 document.getElementById('car-grid').innerHTML = Array.from({ length: n }).map(() => `
                   <div class="skeleton-card">
@@ -245,8 +248,10 @@
             
               async function init() {
                 renderSkeletons();
-                [allCars] = await Promise.all([getCars(), initLikes()]);
-            
+                const [cars, , momentum] = await Promise.all([getCars(), initLikes(), getMonthlyMomentum()]);
+                allCars = cars;
+                monthlyTopId = momentum.topId;
+
                 countUp(document.getElementById('stat-cars'), allCars.length);
                 countUp(document.getElementById('stat-mods'), allCars.reduce((n, c) => n + (c.mods ? c.mods.length : 0), 0));
                 const owners = new Set(allCars.map(c => c.owner).filter(Boolean));
@@ -294,6 +299,7 @@
             
                 grid.innerHTML = cars.map(car => renderCarCard(car)).join('');
                 initCardExtras(grid);
+                applyMonthRibbon(grid, monthlyTopId);
               }
             
               // Mouse parallax: hero layers + background canvas drift at different depths

@@ -45,6 +45,7 @@
     <a href="leaderboard.html">Leaderboard</a>
     <a href="compare.html">Compare</a>
     <a href="activity.html">Activity</a>
+    <a href="feed.xml" title="RSS feed of crew activity">RSS</a>
     <a href="https://dragy.pages.dev" target="_blank" rel="noopener">Dragy</a>
   </div>
   <p>Built by the crew, for the crew. Every build has a story.</p>
@@ -85,6 +86,29 @@
     const totalMods = cars.reduce((n, c) => n + (c.mods ? c.mods.length : 0), 0);
     const totalReps = cars.reduce((n, c) => n + (c.likes || 0), 0);
 
+    // Achievement stats — comments/updates counts and OG/monthly checks all
+    // read from public tables, so they work when viewing anyone's profile.
+    const [updatesCount, commentsCount, ogIds, momentum, sentIn, sentOut] = await Promise.all([
+      getUpdateCountByUser(userId),
+      getCommentCountByUser(userId),
+      getOGBuilderIds(),
+      getMonthlyMomentum(),
+      isMe ? getMyCallouts() : Promise.resolve(null),
+      isMe ? getMySentCallouts() : Promise.resolve(null),
+    ]);
+    const isBuildOfMonth = !!momentum.topId && cars.some(c => c.id === momentum.topId);
+    const badgeStats = {
+      carsCount: cars.length,
+      totalMods,
+      totalReps,
+      updatesCount,
+      commentsCount,
+      isOG: ogIds.has(userId),
+      isBuildOfMonth,
+    };
+    if (isMe) badgeStats.calloutCount = (sentIn || []).length + (sentOut || []).length;
+    const badgeWallHtml = renderBadgeWall(computeBadges(badgeStats));
+
     document.title = `${displayName} – The Garage`;
 
     const avatarHtml = card && card.avatar
@@ -119,6 +143,8 @@
           </div>
         </div>
       </div>
+
+      ${badgeWallHtml}
 
       ${isMe ? `
       <div class="form-section profile-edit" id="profile-edit" style="display:none">
@@ -156,6 +182,7 @@
         </div>`}`;
 
     initCardExtras(document.getElementById('profile-root'));
+    applyMonthRibbon(document.getElementById('profile-root'), momentum.topId);
 
     const av = document.getElementById('pe-avatar');
     if (av) av.addEventListener('change', function () {

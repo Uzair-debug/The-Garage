@@ -2102,6 +2102,112 @@ a.hero-chip:hover { border-color: var(--page-accent, var(--accent)); color: #fff
   margin-top: 2px;
 }
 
+/* ─── ACHIEVEMENTS / BADGE WALL ────────────────────────────────── */
+.badge-wall { margin: 1.5rem 0; }
+.badge-wall-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+}
+.badge-wall-head h3 { margin: 0; }
+.badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.achievement {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: default;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.achievement .ach-icon { font-size: 0.95rem; line-height: 1; }
+.achievement.earned {
+  border-color: rgba(230,48,48,0.3);
+  background: var(--accent-dim);
+  color: var(--text);
+}
+.achievement.earned:hover { transform: translateY(-2px); border-color: var(--accent); }
+.achievement.locked {
+  color: var(--text-dim);
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+.achievement.locked .ach-icon { opacity: 0.6; }
+
+/* ─── BUILD OF THE MONTH RIBBON ────────────────────────────────── */
+.month-ribbon {
+  position: absolute;
+  top: 10px; right: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 9px;
+  border-radius: 100px;
+  color: #1a1408;
+  background: linear-gradient(135deg, #ffd25e, #ff9f3c);
+  box-shadow: 0 3px 10px -2px rgba(255, 159, 60, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.month-badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  color: #1a1408;
+  background: linear-gradient(135deg, #ffd25e, #ff9f3c);
+}
+
+/* ─── EMBED / SHARE MODAL ──────────────────────────────────────── */
+.embed-preview {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  background: var(--surface2);
+  min-height: 96px;
+}
+.code-box {
+  position: relative;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 0.75rem;
+}
+.code-box pre {
+  margin: 0;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.embed-hint { font-size: 0.78rem; color: var(--text-dim); }
+
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

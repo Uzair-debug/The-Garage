@@ -43,12 +43,13 @@
                 initAuth();
                 const params = new URLSearchParams(location.search);
                 const id = params.get('id');
-                const [car, currentUser] = await Promise.all([
+                const [car, currentUser, momentum] = await Promise.all([
                   id ? getCar(id) : null,
                   getCurrentUser(),
+                  getMonthlyMomentum(),
                   initLikes(),
                 ]);
-            
+
                 if (!car) {
                   document.getElementById('car-detail').innerHTML = `
                     <div style="text-align:center;padding:4rem 0;color:var(--text-muted)">
@@ -57,15 +58,15 @@
                     </div>`;
                   return;
                 }
-            
+
                 // canManage = owner OR admin (edit/delete). isActualOwner = the real owner only.
                 const canManage = !!currentUser && (car.user_id === currentUser.id || isAdmin(currentUser));
                 const isActualOwner = !!currentUser && car.user_id === currentUser.id;
                 document.title = `${car.year ? car.year + ' ' : ''}${car.make} ${car.model} – The Garage`;
-                render(car, canManage, isActualOwner);
+                render(car, canManage, isActualOwner, momentum.topId === car.id);
               }
-            
-              function render(car, canManage, isActualOwner) {
+
+              function render(car, canManage, isActualOwner, isBuildOfMonth) {
                 const title = escapeHtml([car.make, car.model].filter(Boolean).join(' ') || 'Unnamed Car');
                 const meta = escapeHtml([car.year, car.drivetrain, car.colour].filter(Boolean).join(' · '));
             
@@ -78,6 +79,8 @@
                 const statusBadge = statusMeta
                   ? `<span class="status-badge" style="background:${statusMeta.bg};color:${statusMeta.color};border:1px solid ${statusMeta.color}44">${escapeHtml(car.status)}</span>`
                   : '';
+                const monthChip = isBuildOfMonth
+                  ? `<span class="month-badge-chip">🏆 Build of ${currentMonthLabel()}</span>` : '';
             
                 // Spec chips shown on the hero
                 const chip = (text, icon) => `<span class="hero-chip">${icon || ''}${escapeHtml(text)}</span>`;
@@ -103,6 +106,7 @@
                         <img id="gallery-main-img" src="${encodeURI(car.photos[0])}" alt="${title}">
                         <div class="car-hero-content">
                           ${statusBadge}
+                          ${monthChip}
                           <h1 class="car-hero-title">${title}</h1>
                           <div class="hero-chips">${chips}</div>
                         </div>
@@ -115,6 +119,7 @@
                       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
                         <h1 style="margin:0">${title}</h1>
                         ${statusBadge}
+                        ${monthChip}
                       </div>
                       ${meta ? `<p class="year-make">${meta}</p>` : ''}
                     </div>`;
@@ -190,6 +195,10 @@
                     <div class="car-detail-title">${igHtml}</div>
                     <div class="car-detail-actions">
                       ${likeHtml}
+                      <button class="btn" onclick="openEmbedModal('${car.id}')" title="Get a shareable card for bios, forums or your own site">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 8l-4 4l4 4"/><path d="M17 8l4 4l-4 4"/><path d="M14 4l-4 16"/></svg>
+                        Embed
+                      </button>
                       ${!isActualOwner ? `<button class="btn btn-primary" onclick="openCallout('${car.id}')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 8a3 3 0 0 1 0 6"/><path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"/><path d="M12 8h0l4.524 -3.77a0.9 .9 0 0 1 1.476 .692v12.156a0.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h8"/></svg>
                         Request Callout</button>` : ''}
@@ -446,6 +455,55 @@
                 catch (e) { showToast('Could not delete.', 'error'); }
               }
             
+              // ─── Embed / share ─────────────────────────────────────────────
+              function openEmbedModal(carId) {
+                if (document.getElementById('embed-overlay')) return;
+                const link = `${location.origin}/car.html?id=${carId}`;
+                const snippet = `<script src="${location.origin}/embed.js" data-car="${carId}" async><\/script>`;
+                const overlay = document.createElement('div');
+                overlay.id = 'embed-overlay';
+                overlay.className = 'auth-overlay';
+                overlay.innerHTML = `
+                  <div class="auth-modal">
+                    <button class="auth-close" onclick="closeEmbedModal()" title="Close">&times;</button>
+                    <h2 class="auth-title">Share this build</h2>
+                    <p class="auth-sub">Drop the snippet below into a bio link page, forum post or your own site.</p>
+                    <div class="embed-preview" id="embed-preview"></div>
+                    <div class="code-box"><pre id="embed-snippet-text">${escapeHtml(snippet)}</pre></div>
+                    <span id="embed-link-text" style="display:none">${escapeHtml(link)}</span>
+                    <div class="form-actions" style="margin-bottom:0.75rem">
+                      <button class="btn btn-primary" onclick="copyEmbedText('embed-snippet-text', this)" style="flex:1;justify-content:center">Copy embed code</button>
+                      <button class="btn" onclick="copyEmbedText('embed-link-text', this)" style="flex:1;justify-content:center">Copy link</button>
+                    </div>
+                    <p class="embed-hint">The card pulls live reps, mods and photo — no iframe needed.</p>
+                  </div>`;
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click', e => { if (e.target === overlay) closeEmbedModal(); });
+
+                // Live preview: run the real embed script inside our own modal.
+                const s = document.createElement('script');
+                s.src = 'embed.js';
+                s.setAttribute('data-car', carId);
+                document.getElementById('embed-preview').appendChild(s);
+              }
+
+              function closeEmbedModal() {
+                const el = document.getElementById('embed-overlay');
+                if (el) el.remove();
+              }
+
+              async function copyEmbedText(sourceId, btn) {
+                const text = (document.getElementById(sourceId) || {}).textContent || '';
+                try {
+                  await navigator.clipboard.writeText(text);
+                  const orig = btn.textContent;
+                  btn.textContent = 'Copied!';
+                  setTimeout(() => { btn.textContent = orig; }, 1600);
+                } catch (e) {
+                  showToast('Could not copy — select and copy manually.', 'error');
+                }
+              }
+
               // ─── Request Callout ───────────────────────────────────────────
               function openCallout(carId) {
                 requireAuth(async (user) => {
