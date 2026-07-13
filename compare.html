@@ -84,6 +84,10 @@
     const m = String(c.power || '').match(/[\d.]+/);
     return m ? parseFloat(m[0]) : null;
   }
+  function firstNum(c, key) {
+    const m = String((c && c[key]) || '').match(/[\d.]+/);
+    return m ? parseFloat(m[0]) : null;
+  }
 
   function renderCompare() {
     const a = cars.find(c => c.id === document.getElementById('pick-a').value);
@@ -101,6 +105,9 @@
     }
 
     const pa = powerNum(a), pb = powerNum(b);
+    const zsA = firstNum(a, 'zero_to_sixty'), zsB = firstNum(b, 'zero_to_sixty');
+    const qmA = firstNum(a, 'quarter_mile'), qmB = firstNum(b, 'quarter_mile');
+    const dpA = firstNum(a, 'dyno_power'), dpB = firstNum(b, 'dyno_power');
     const head = (c) => `
       <div class="cmp-car">
         ${c.photos && c.photos.length
@@ -115,6 +122,9 @@
       ['Status', specVal(a, 'status'), specVal(b, 'status'), 0],
       ['Engine', specVal(a, 'engine'), specVal(b, 'engine'), 0],
       ['Power', specVal(a, 'power'), specVal(b, 'power'), pa !== null && pb !== null && pa !== pb ? (pa > pb ? 1 : 2) : 0],
+      ['0–60', specVal(a, 'zero_to_sixty'), specVal(b, 'zero_to_sixty'), zsA !== null && zsB !== null && zsA !== zsB ? (zsA < zsB ? 1 : 2) : 0],
+      ['1/4 Mile', specVal(a, 'quarter_mile'), specVal(b, 'quarter_mile'), qmA !== null && qmB !== null && qmA !== qmB ? (qmA < qmB ? 1 : 2) : 0],
+      ['Dyno Power', specVal(a, 'dyno_power'), specVal(b, 'dyno_power'), dpA !== null && dpB !== null && dpA !== dpB ? (dpA > dpB ? 1 : 2) : 0],
       ['Drivetrain', specVal(a, 'drivetrain'), specVal(b, 'drivetrain'), 0],
       ['Colour', specVal(a, 'colour'), specVal(b, 'colour'), 0],
       ['Mods', `${a.mods ? a.mods.length : 0}`, `${b.mods ? b.mods.length : 0}`,

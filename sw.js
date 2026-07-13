@@ -1,11 +1,12 @@
 // Service worker for The Garage — offline caching + web push notifications.
 
-const CACHE = 'garage-v2';
+const CACHE = 'garage-v3';
 const IMG_CACHE = 'garage-img-v1';
 const CORE = [
   'index.html', 'style.css', 'app.js', 'auth.js', 'bg.js', 'push.js',
   'icon.svg', 'manifest.json', 'car.html', 'add.html', 'profile.html',
   'callouts.html', 'leaderboard.html', 'compare.html', 'activity.html',
+  'wrapped.html',
 ];
 
 self.addEventListener('install', event => {

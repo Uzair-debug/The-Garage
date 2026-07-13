@@ -123,6 +123,7 @@
             <div class="profile-name-row">
               <div class="profile-name">${escapeHtml(displayName)}</div>
               ${isMe ? '<div class="profile-you-badge">You</div>' : ''}
+              <a href="wrapped.html?id=${userId}" class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem">🎁 ${isMe ? 'Your' : ''} Garage Wrapped</a>
               ${isMe ? '<button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem" onclick="toggleEditProfile()">Edit profile</button>' : ''}
             </div>
             ${card && card.bio ? `<p class="profile-bio">${escapeHtml(card.bio)}</p>` : ''}

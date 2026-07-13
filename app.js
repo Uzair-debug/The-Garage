@@ -8,7 +8,7 @@ function sb() {
 }
 
 // Columns needed for the home grid — avoids pulling full photo arrays we don't show.
-const LIST_COLUMNS = 'id,year,make,model,engine,owner,user_id,status,likes,mods,photos,updated_at';
+const LIST_COLUMNS = 'id,year,make,model,engine,owner,user_id,status,likes,mods,photos,updated_at,zero_to_sixty,quarter_mile,dyno_power';
 
 async function getCars() {
   const { data, error } = await sb().from('cars').select(LIST_COLUMNS).order('updated_at', { ascending: false });
@@ -430,6 +430,7 @@ function renderCarCard(car, { showOwner = true } = {}) {
     ? `<span class="badge badge-red">${car.mods.length} mod${car.mods.length > 1 ? 's' : ''}</span>` : '';
   const engine = car.engine ? `<span class="badge">${escapeHtml(car.engine)}</span>` : '';
   const power = car.power ? `<span class="badge">${escapeHtml(car.power)}</span>` : '';
+  const quarterMile = car.quarter_mile ? `<span class="badge badge-time">⏱ ${escapeHtml(car.quarter_mile)}</span>` : '';
 
   const liked = hasLiked(car.id);
   const likeBtn = `
@@ -470,7 +471,7 @@ function renderCarCard(car, { showOwner = true } = {}) {
           </div>
           ${likeBtn}
         </div>
-        <div class="car-card-badges">${engine}${power}${modCount}</div>
+        <div class="car-card-badges">${engine}${power}${quarterMile}${modCount}</div>
       </div>
     </div>`;
 }
@@ -704,6 +705,44 @@ function renderBadgeWall(badges) {
           </div>`).join('')}
       </div>
     </div>`;
+}
+
+// ─── Garage Wrapped: year-scoped stat helpers ──────────────────────
+// All read from public tables filtered by timestamp, so a year recap
+// works for anyone's profile, not just the signed-in user.
+
+async function getRepsEarnedSince(carIds, sinceISO) {
+  if (!carIds || !carIds.length) return 0;
+  const { count, error } = await sb().from('car_likes')
+    .select('car_id', { count: 'exact', head: true })
+    .in('car_id', carIds).gte('created_at', sinceISO);
+  if (error) return 0;
+  return count || 0;
+}
+
+async function getCommentsReceivedSince(carIds, sinceISO) {
+  if (!carIds || !carIds.length) return 0;
+  const { count, error } = await sb().from('car_comments')
+    .select('id', { count: 'exact', head: true })
+    .in('car_id', carIds).gte('created_at', sinceISO);
+  if (error) return 0;
+  return count || 0;
+}
+
+async function getCommentsGivenSince(userId, sinceISO) {
+  const { count, error } = await sb().from('car_comments')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId).gte('created_at', sinceISO);
+  if (error) return 0;
+  return count || 0;
+}
+
+async function getUpdatesPostedSince(userId, sinceISO) {
+  const { count, error } = await sb().from('car_updates')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId).gte('created_at', sinceISO);
+  if (error) return 0;
+  return count || 0;
 }
 
 // Drop a "Build of the Month" ribbon onto a car card already in the DOM.

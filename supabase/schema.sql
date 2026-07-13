@@ -21,7 +21,10 @@ create table public.cars (
   status      text,
   instagram   text,
   likes       integer default 0,
-  user_id     uuid references auth.users(id)
+  user_id     uuid references auth.users(id),
+  zero_to_sixty text, -- free text, e.g. "4.2s" (2026-07-13)
+  quarter_mile  text, -- free text, e.g. "12.8s @ 108mph"
+  dyno_power    text  -- free text, e.g. "412whp / 380wtq"
 );
 
 create table public.profiles (
@@ -251,5 +254,14 @@ create table public.car_updates (
   created_at timestamptz default now()
 );
 -- RLS: public read; only the car's owner may post; delete by author or admin.
+
+
+-- ============================================================
+-- PERFORMANCE STATS (2026-07-13)
+-- ============================================================
+
+-- cars.zero_to_sixty / quarter_mile / dyno_power (all nullable text,
+-- see the cars table above). No RLS change needed — covered by the
+-- existing public-read / owner-write policies on public.cars.
 
 -- increment_likes(text) has been dropped (replaced by car_likes + trigger).

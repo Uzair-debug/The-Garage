@@ -84,12 +84,15 @@
             
                 // Spec chips shown on the hero
                 const chip = (text, icon) => `<span class="hero-chip">${icon || ''}${escapeHtml(text)}</span>`;
+                const timeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="13" r="7"/><path d="M12 10v3"/><path d="M10 3h4"/></svg>';
                 const chips = [
                   car.year ? chip(car.year) : '',
                   car.engine ? chip(car.engine) : '',
                   car.power ? chip(car.power, catIcon('Engine', 13)) : '',
                   car.drivetrain ? chip(car.drivetrain, catIcon('Wheels', 13)) : '',
                   car.colour ? chip(car.colour, catIcon('Colour', 13)) : '',
+                  car.zero_to_sixty ? chip(`${car.zero_to_sixty} 0-60`, timeIcon) : '',
+                  car.quarter_mile ? chip(car.quarter_mile, timeIcon) : '',
                 ].join('');
             
                 // Hero / gallery
@@ -136,6 +139,7 @@
                   ['Make', car.make], ['Model', car.model], ['Year', car.year],
                   ['Engine', car.engine], ['Power', car.power], ['Drivetrain', car.drivetrain],
                   ['Colour', car.colour], ['Status', car.status],
+                  ['0–60', car.zero_to_sixty], ['1/4 Mile', car.quarter_mile], ['Dyno Power', car.dyno_power],
                 ].filter(([, v]) => v);
             
                 // Owner row links to profile

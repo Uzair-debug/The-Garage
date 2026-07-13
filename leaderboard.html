@@ -37,6 +37,11 @@
                 <p class="dim-note">Loading…</p>
             </div>
 
+            <h2 class="section-title">Quickest Builds</h2>
+            <div class="detail-card" id="lb-quickest">
+                <p class="dim-note">Loading…</p>
+            </div>
+
             <h2 class="section-title">Top Owners</h2>
             <div class="detail-card" id="lb-owners">
                 <p class="dim-note">Loading…</p>
@@ -88,7 +93,28 @@
                       ${c.likes}
                     </span>
                   </a>`).join('') : '<p class="dim-note">No reps yet — go show some builds love.</p>';
-            
+
+                // Quickest builds by 1/4 mile time (lower is faster)
+                const quarterNum = c => {
+                  const m = String(c.quarter_mile || '').match(/[\d.]+/);
+                  return m ? parseFloat(m[0]) : null;
+                };
+                const quickest = cars
+                  .map(c => ({ c, t: quarterNum(c) }))
+                  .filter(x => x.t !== null)
+                  .sort((a, b) => a.t - b.t)
+                  .slice(0, 10);
+                document.getElementById('lb-quickest').innerHTML = quickest.length ? quickest.map(({ c }, i) => `
+                  <a class="lb-row" href="car.html?id=${c.id}">
+                    ${rankBadge(i)}
+                    ${c.photos && c.photos.length
+                      ? `<img class="lb-img" src="${encodeURI(thumbUrl(c.photos[0]))}" onerror="this.onerror=null;this.src='${encodeURI(c.photos[0])}'" alt="" loading="lazy">`
+                      : `<span class="lb-img lb-img-empty">${carIcon()}</span>`}
+                    <span class="lb-name">${c.year ? escapeHtml(c.year) + ' ' : ''}${escapeHtml(c.make || '')} ${escapeHtml(c.model || '')}
+                      <small>${escapeHtml(c.owner || '')}</small></span>
+                    <span class="lb-reps">⏱ ${escapeHtml(c.quarter_mile)}</span>
+                  </a>`).join('') : '<p class="dim-note">No 1/4 mile times logged yet.</p>';
+
                 // Top owners by total reps
                 const owners = {};
                 cars.forEach(c => {

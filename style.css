@@ -449,6 +449,12 @@ main {
   color: #e67070;
 }
 
+.badge-time {
+  background: rgba(255,159,60,0.14);
+  border-color: rgba(255,159,60,0.3);
+  color: #ffb870;
+}
+
 /* EMPTY STATE */
 .empty-state {
   text-align: center;
@@ -2207,6 +2213,20 @@ a.hero-chip:hover { border-color: var(--page-accent, var(--accent)); color: #fff
   word-break: break-all;
 }
 .embed-hint { font-size: 0.78rem; color: var(--text-dim); }
+
+/* ─── GARAGE WRAPPED ────────────────────────────────────────────── */
+.wrapped-canvas-wrap {
+  display: flex;
+  justify-content: center;
+}
+#wrapped-canvas {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,0.6);
+}
 
 /* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {

@@ -106,6 +106,27 @@
                 </div>
             </div>
 
+            <!-- Performance -->
+            <div class="form-section">
+                <h3>Performance <span style="font-weight:400;color:var(--text-dim);font-size:0.78rem">(optional)</span></h3>
+                <div class="field-row">
+                    <div class="field">
+                        <label>0–60</label>
+                        <input type="text" id="zero-sixty" placeholder="e.g. 4.2s">
+                    </div>
+                    <div class="field">
+                        <label>1/4 mile</label>
+                        <input type="text" id="quarter-mile" placeholder="e.g. 12.8s @ 108mph">
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Dyno power</label>
+                        <input type="text" id="dyno-power" placeholder="e.g. 412whp / 380wtq">
+                    </div>
+                </div>
+            </div>
+
             <!-- Owner -->
             <div class="form-section">
                 <h3>Owner</h3>
@@ -193,6 +214,9 @@
                 document.getElementById('drivetrain').value = car.drivetrain || '';
                 document.getElementById('colour').value = car.colour || '';
                 document.getElementById('status').value = car.status || '';
+                document.getElementById('zero-sixty').value = car.zero_to_sixty || '';
+                document.getElementById('quarter-mile').value = car.quarter_mile || '';
+                document.getElementById('dyno-power').value = car.dyno_power || '';
                 document.getElementById('owner').value = car.owner || '';
                 document.getElementById('instagram').value = car.instagram || '';
                 photos = car.photos || [];
@@ -312,6 +336,9 @@
                     drivetrain: document.getElementById('drivetrain').value,
                     colour: document.getElementById('colour').value.trim(),
                     status: document.getElementById('status').value,
+                    zero_to_sixty: document.getElementById('zero-sixty').value.trim(),
+                    quarter_mile: document.getElementById('quarter-mile').value.trim(),
+                    dyno_power: document.getElementById('dyno-power').value.trim(),
                     owner: document.getElementById('owner').value.trim(),
                     instagram: document.getElementById('instagram').value.trim().replace(/^@/, ''),
                     photos, mods,
