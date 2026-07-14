@@ -162,7 +162,7 @@ main {
   margin-bottom: 1rem;
 }
 
-.hero-bio-text h1 span {
+.hero-bio-text h1 span:not(.ignite-word) {
   background: linear-gradient(105deg,
     var(--accent) 30%, #ff8d6b 46%, #ffc4ae 50%, #ff8d6b 54%, var(--accent-hot) 70%);
   background-size: 300% 100%;

@@ -59,9 +59,11 @@
     document.querySelectorAll('.hero-bio-text h1').forEach(h1 => {
       if (h1.dataset.ignited) return;
       h1.dataset.ignited = '1';
+      const original = Array.from(h1.childNodes);
+      h1.innerHTML = ''; // clear; original nodes stay valid detached references
       const frag = document.createDocumentFragment();
       let wordIdx = 0;
-      Array.from(h1.childNodes).forEach(node => {
+      original.forEach(node => {
         if (node.nodeType === Node.TEXT_NODE) {
           node.textContent.split(/(\s+)/).forEach(chunk => {
             if (!chunk) return;
@@ -73,7 +75,7 @@
             frag.appendChild(span);
           });
         } else {
-          frag.appendChild(node);
+          frag.appendChild(node); // re-attach original element (e.g. <br>, the accent span) in place
         }
       });
       h1.appendChild(frag);
